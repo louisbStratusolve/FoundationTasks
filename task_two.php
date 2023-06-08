@@ -1,4 +1,18 @@
 <?php
+if ($_POST && $_POST["fibonacciSequenceNumber"]) {
+
+    function isPerfectSquare($x)
+    {
+        $s = (int)(sqrt($x));
+        return ($s * $s == $x);
+    }
+
+    function isFibonacci($n)
+    {
+        return isPerfectSquare(5 * $n * $n + 4) ||
+            isPerfectSquare(5 * $n * $n - 4);
+    }
+
     // LOOP CODE:
     function getFibonacciSequence($lastNumber)
     {
@@ -42,7 +56,11 @@
         return $outputArray;
     }
 
-    echo(json_encode(getFibonacciSequenceRecursive(34)));
-    echo(json_encode(getFibonacciSequence(34)));
-
+    if (isFibonacci($_POST["fibonacciSequenceNumber"])) {
+        echo(json_encode(getFibonacciSequenceRecursive($_POST["fibonacciSequenceNumber"])));
+        //echo(json_encode(getFibonacciSequence($_POST["fibonacciSequenceNumber"])));
+    } else {
+        echo $_POST["fibonacciSequenceNumber"] . " is not in the Fibonacci sequence";
+    }
+}
 ?>
