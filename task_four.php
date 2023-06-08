@@ -3,13 +3,12 @@
 
 class ItemOwners
 {
-    public static function groupByOwners($ItemsArr)
-    {
-        $AssocArray = [];
-        foreach ($ItemsArr as $xKey => $xValue) {
-            $AssocArray[$xValue][] = $xKey;
+    public static function groupByOwners($ItemsArr) {
+        $PeopleArr = [];
+        foreach ($ItemsArr as $xKeyStr => $xValueStr) {
+            $PeopleArr[$xValueStr][] = $xKeyStr;
         }
-        return $AssocArray;
+        return $PeopleArr;
     }
 }
 
