@@ -1,0 +1,17 @@
+version: '3'
+services:
+  sql:
+    container_name: foundation-task-db
+    #    image: biarms/mysql:5.7.33-beta-circleci # mysql image that works with m1 chip
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: 'secret'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'secret'
+      MYSQL_DATABASE: 'foundation_task'
+    volumes:
+      - dxsqldata:/var/lib/mysql
+    ports:
+      - 3306:3306
+volumes:
+  dxsqldata: { }
