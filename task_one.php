@@ -1,37 +1,35 @@
 <?php
 
-function addAllNumbersRecursive($Array)
-{
+function addAllNumbersRecursive($NumbersArr) {
     $TotalSumArrayCountInt = 0;
     $SumArrayCountInt = 0;
-    foreach ($Array as $item) {
-        $SumArrayCountInt += $item;
+    foreach ($NumbersArr as $NumberInt) {
+        $SumArrayCountInt += $NumberInt;
     }
     $TotalSumArrayCountInt += $SumArrayCountInt;
-    array_shift($Array);
-    if (count($Array) > 0) {
-        $TotalSumArrayCountInt += addAllNumbersRecursive($Array);
+    array_shift($NumbersArr);
+    if (count($NumbersArr) > 0) {
+        $TotalSumArrayCountInt += addAllNumbersRecursive($NumbersArr);
     }
     return $TotalSumArrayCountInt;
 }
 
-function addAllNumbers($Array)
-{
+function addAllNumbers($NumbersArr) {
     $TotalSumArrayCountInt = 0;
 
-    while (count($Array) > 0) {
+    while (count($NumbersArr) > 0) {
         $SumArrayCountInt = 0;
-        foreach ($Array as $item) {
-            $SumArrayCountInt += $item;
+        foreach ($NumbersArr as $NumberInt) {
+            $SumArrayCountInt += $NumberInt;
         }
         $TotalSumArrayCountInt += $SumArrayCountInt;
-        array_shift($Array);
+        array_shift($NumbersArr);
     }
     return $TotalSumArrayCountInt;
 }
 
-$Array = [1, 1, 1, 1, 1]; //5+4+3+2+1=15
+$NumbersArr = [1, 1, 1, 1, 1]; //5+4+3+2+1=15
 
-echo addAllNumbers($Array);
-echo addAllNumbersRecursive($Array);
+echo addAllNumbers($NumbersArr);
+echo addAllNumbersRecursive($NumbersArr);
 ?>
