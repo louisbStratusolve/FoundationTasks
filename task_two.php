@@ -1,45 +1,42 @@
 <?php
     // LOOP CODE:
-    function getFibonacciSequence($lastNumber)
-    {
-        $outputArray = [];
-        $n1 = 1;
-        $n2 = 0;
-        $currentValue = 0;
-        while ($currentValue <= $lastNumber) {
-            $outputArray[] = $n2;
-            $temp = $n1 + $n2;
-            $n1 = $n2;
-            $n2 = $temp;
-            $currentValue = $n2;
+    function getFibonacciSequence($LastNumberInt) {
+        $OutputArr = [];
+        $N1Int = 1;
+        $N2Int = 0;
+        $CurrentValueInt = 0;
+        while ($CurrentValueInt <= $LastNumberInt) {
+            $OutputArr[] = $N2Int;
+            $TempInt = $N1Int + $N2Int;
+            $N1Int = $N2Int;
+            $N2Int = $TempInt;
+            $CurrentValueInt = $N2Int;
         }
-        return $outputArray;
+        return $OutputArr;
     }
 
 // RECURSIVE CODE
-    function getFibonacciByIndexRecursive($n)
-    {
-        if ($n == 0) {
+    function getFibonacciByIndexRecursive($NumberInt) {
+        if ($NumberInt == 0) {
             return 0;
         }
-        if ($n == 1) {
+        if ($NumberInt == 1) {
             return 1;
         } else {
-            return getFibonacciByIndexRecursive($n - 1) + getFibonacciByIndexRecursive($n - 2);
+            return getFibonacciByIndexRecursive($NumberInt - 1) + getFibonacciByIndexRecursive($NumberInt - 2);
         }
     }
 
-    function getFibonacciSequenceRecursive($lastNumber)
-    {
-        $currentNumberInt = 0;
-        $result = 0;
-        $outputArray = [];
-        while ($result < $lastNumber) {
-            $result = getFibonacciByIndexRecursive($currentNumberInt);
-            $outputArray[] = $result;
-            $currentNumberInt++;
+    function getFibonacciSequenceRecursive($LastNumberInt) {
+        $CurrentNumberInt = 0;
+        $Result = 0;
+        $OutputArray = [];
+        while ($Result < $LastNumberInt) {
+            $Result = getFibonacciByIndexRecursive($CurrentNumberInt);
+            $OutputArray[] = $Result;
+            $CurrentNumberInt++;
         }
-        return $outputArray;
+        return $OutputArray;
     }
 
     echo(json_encode(getFibonacciSequenceRecursive(34)));
