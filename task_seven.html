@@ -27,11 +27,11 @@
 
     <script>
         function addMockData() {
-            $('.PersonTBody').empty().append(`<tr><th>loading....</th>`);
-            $.post("http://localhost:63342/PHPTest/task_six.php",
+            $('.TBodyPerson').empty().append(`<tr><th>loading....</th>`);
+            $.post("http://localhost:63342/FoundationTasks/task_six.php",
                 {"Type": "addMockData"},
                 function (data, status) {
-                    $('.PersonTBody').empty();
+                    $('.TBodyPerson').empty();
                     if (data && data.length && status) {
                         loadAllPeople();
                     } else {
@@ -49,7 +49,7 @@
         function isValidCreate() {
             $("input").removeClass("border").removeClass("border-danger");
 
-            isValid = true;
+            let isValid = true;
             if (!$('#createFirstNameInput').val()) {
                 $('#createFirstNameInput').addClass("border").addClass("border-danger");
                 isValid = false;
@@ -75,8 +75,7 @@
 
         function isValidUpdate() {
             $("input").removeClass("border").removeClass("border-danger");
-
-            isValid = true;
+            let isValid = true;
             if (!$('#editFirstNameInput').val()) {
                 $('#editFirstNameInput').addClass("border").addClass("border-danger");
                 isValid = false;
@@ -116,11 +115,10 @@
             };
 
             $.ajax({
-                url: "http://localhost:63342/PHPTest/task_six.php",
+                url: "http://localhost:63342/FoundationTasks/task_six.php",
                 type: 'POST',
                 data: person,
                 success: function (result) {
-                    console.log("saved person: ", result);
                     toastr.success("Successfully saved the person");
                     $('#createPersonModal').modal('hide');
                     loadAllPeople();
@@ -141,15 +139,15 @@
             $('#editAgeInput').val(0);
 
             $.ajax({
-                url: "http://localhost:63342/PHPTest/task_six.php",
+                url: "http://localhost:63342/FoundationTasks/task_six.php",
                 type: 'GET',
                 data: {Id: id},
                 success: function (data) {
                     if (data) {
                         data = JSON.parse(data);
                     }
-                    // console.log("DATA =>", data)
                     let item = data[0];
+
                     $('#editIdInput').val(item.Id);
                     $('#editFirstNameInput').val(item.FirstName);
                     $('#editSurnameInput').val(item.Surname);
@@ -180,7 +178,7 @@
                 _method: "PUT"
             }
             $.ajax({
-                url: "http://localhost:63342/PHPTest/task_six.php",
+                url: "http://localhost:63342/FoundationTasks/task_six.php",
                 type: 'POST',
                 data: editPersonDto,
                 success: function (result) {
@@ -197,7 +195,7 @@
 
         function deletePerson(id) {
             $.ajax({
-                url: "http://localhost:63342/PHPTest/task_six.php",
+                url: "http://localhost:63342/FoundationTasks/task_six.php",
                 type: 'POST',
                 data: {
                     Id: id,
@@ -215,11 +213,11 @@
         }
 
         function loadAllPeople() {
-            $('.PersonTBody').empty().append(`<tr><th>loading....</th>`);
-            $.post("http://localhost:63342/PHPTest/task_six.php",
+            $('.TBodyPerson').empty().append(`<tr><th>loading....</th>`);
+            $.post("http://localhost:63342/FoundationTasks/task_six.php",
                 {Type: "allPeople"},
                 function (data, status) {
-                    $('.PersonTBody').empty();
+                    $('.TBodyPerson').empty();
                     if (data && data.length && status)
                         data = JSON.parse(data);
                     for (let i = 0; i < data.length; i++) {
@@ -245,14 +243,14 @@
                                             </div>
                                         </td>
                                     </tr>`;
-                        $('.PersonTBody').append(tr);
+                        $('.TBodyPerson').append(tr);
                     }
                 });
         }
 
         function deleteAllPeople() {
             $.ajax({
-                url: "http://localhost:63342/PHPTest/task_six.php",
+                url: "http://localhost:63342/FoundationTasks/task_six.php",
                 type: 'POST',
                 data: {
                     _method: "DELETE"
@@ -275,11 +273,13 @@
                 addMockData();
             });
             $('#container').click(function (e) {
-                if ($(e.target).hasClass('edit')) {
-                    loadPerson($(e.target).attr('person-id'))
+                if ($(e.target).hasClass('edit') || $(e.target).parents('.edit').length) {
+                    var id = $(e.target).attr('person-id') || $(e.target).parents('.edit').attr('person-id');
+                    loadPerson(id);
                 }
-                if ($(e.target).hasClass('delete')) {
-                    $('#deleteSubmitButton').attr('person-id', $(e.target).attr('person-id'))
+                else if ($(e.target).hasClass('delete') || $(e.target).parents('.delete').length) {
+                    var id = $(e.target).attr('person-id') || $(e.target).parents('.delete').attr('person-id')
+                    $('#deleteSubmitButton').attr('person-id', id);
                 }
             });
             $('#deleteSubmitButton').click(function (e) {
@@ -338,7 +338,7 @@
                 <th scope="col">Actions</th>
             </tr>
             </thead>
-            <tbody class="PersonTBody">
+            <tbody class="TBodyPerson">
 
             </tbody>
         </table>
