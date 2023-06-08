@@ -1,84 +1,81 @@
 <?php
-
 class LoggingDto
 {
-    public $name;
-    public $description;
-    public $created;
-    public $queryTime;
+    public $IdInt;
+    public $NameStr;
+    public $DescriptionStr;
+    public $CreatedStr;
+    public $QueryTimeInt;
 
-    function __construct($name, $description, $created, $queryTime)
+    function __construct($NameStr, $DescriptionStr, $CreatedStr, $QueryTimeInt)
     {
-        $this->name = $name;
-        $this->description = $description;
-        $this->created = $created;
-        $this->queryTime = $queryTime;
+        $this->NameStr = $NameStr;
+        $this->DescriptionStr = $DescriptionStr;
+        $this->CreatedStr = $CreatedStr;
+        $this->QueryTimeInt = $QueryTimeInt;
     }
 
 }
-
-class Logging
-{
-    private $conn = null;
-
-    function __construct($con)
-    {
-        $this->conn = $con;
-    }
-
-    function createLog($log)
-    {
-        $theQuery = "
-            INSERT INTO Logging (Name, Description, Created, QueryTime) VALUES (
-            '$log->name',
-            '$log->description', 
-            '$log->created', 
-            '$log->queryTime')";
-
-
-        $query = mysqli_query($this->conn, $theQuery);
-
-        if (!$query) {
-            echo "Failed inserting " . $this->conn->error;
-        }
-        return $theQuery;
-    }
-
-
-}
-
 class PersonDto
 {
-    public $firstName;
-    public $surname;
-    public $dateOfBirth;
-    public $emailAddress;
-    public $age;
+    public $IdInt;
+    public $FirstNameStr;
+    public $SurnameStr;
+    public $DateOfBirthStr;
+    public $EmailAddressStr;
+    public $AgeInt;
 
-    function __construct($firstName, $surname, $dateOfBirth, $emailAddress, $age, $id)
+    function __construct($FirstNameStr, $SurnameStr, $DateOfBirthDate, $EmailAddressStr, $AgeInt, $IdInt)
     {
-        $this->firstName = $firstName;
-        $this->surname = $surname;
-        $this->dateOfBirth = $dateOfBirth;
-        $this->emailAddress = $emailAddress;
-        $this->age = $age;
-        $this->id = $id;
+        $this->FirstNameStr = $FirstNameStr;
+        $this->SurnameStr = $SurnameStr;
+        $this->DateOfBirthStr = $DateOfBirthDate;
+        $this->EmailAddressStr = $EmailAddressStr;
+        $this->AgeInt = $AgeInt;
+        $this->IdInt = $IdInt;
     }
 
 }
-
-class Person
+class Logging
 {
-    private $conn = null;
-
-    function __construct($con)
+    private $ConnectionObj = null;
+    function __construct($ConnectionObj)
     {
-        $this->conn = $con;
+        $this->ConnectionObj = $ConnectionObj;
     }
 
-    function addMockData($person)
+    function createLog($Log)
     {
-        $scaffoldedPersons = [
+        $TheQueryStr = "
+            INSERT INTO Logging (Name, Description, Created, QueryTime) 
+            VALUES (
+            '$Log->NameStr',
+            '$Log->DescriptionStr', 
+            '$Log->CreatedStr', 
+            '$Log->QueryTimeInt')";
+
+        $QueryWasSuccessfulBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
+
+        if (!$QueryWasSuccessfulBool) {
+            echo "Failed inserting ".$this->ConnectionObj->error;
+        }
+        return $TheQueryStr;
+    }
+
+
+}
+class Person
+{
+    private $ConnectionObj = null;
+
+    function __construct($ConnectionObj)
+    {
+        $this->ConnectionObj = $ConnectionObj;
+    }
+
+    function addMockData($PersonObjObj)
+    {
+        $ScaffoldedPersonsArr = [
             new PersonDto('John', 'Smith', '1990-05-15', 'john.smith@example.com', 33, null),
             new PersonDto('Emma', 'Johnson', '1982-09-10', 'emma.johnson@example.com', 41, null),
             new PersonDto('Michael', 'Brown', '1978-07-23', 'michael.brown@example.com', 45, null),
@@ -90,94 +87,93 @@ class Person
             new PersonDto('William', 'Thomas', '1991-12-03', 'william.thomas@example.com', 31, null),
             new PersonDto('Ava', 'Harris', '1987-04-12', 'ava.harris@example.com', 36, null)
         ];
-        foreach ($scaffoldedPersons as $scaffoldedPerson) {
-            $person->createPerson($scaffoldedPerson);
+        foreach ($ScaffoldedPersonsArr as $ScaffoldedPersonObj) {
+            $PersonObjObj->createPerson($ScaffoldedPersonObj);
         }
         return true;
     }
 
-    function createPerson($person){
-        $theQuery = "INSERT INTO Person(FirstName, Surname, DateOfBirth, EmailAddress, Age) VALUES (
-            '$person->firstName',
-            '$person->surname', 
-            '$person->dateOfBirth', 
-            '$person->emailAddress', 
-            '$person->age')";;
+    function createPerson($PersonObj)
+    {
+        $TheQueryStr = "INSERT INTO Person 
+            (FirstName, Surname, DateOfBirth, EmailAddress, Age) 
+            VALUES (
+            '$PersonObj->FirstNameStr',
+            '$PersonObj->SurnameStr', 
+            '$PersonObj->DateOfBirthStr', 
+            '$PersonObj->EmailAddressStr', 
+            '$PersonObj->AgeInt')";
 
-        $query = mysqli_query($this->conn, $theQuery);
+        $QueryWasSuccessfulBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
 
-        if (!$query) {
-            echo "Failed inserting " . $this->conn->error;
+        if (!$QueryWasSuccessfulBool) {
+            echo "Failed inserting ".$this->ConnectionObj->error;
             return;
         }
-        return $query;
+        return $QueryWasSuccessfulBool;
+
     }
 
-    function loadPerson($id){}
+    function loadPerson($IdInt){
+    }
 
-    function savePerson($person){}
+    function savePerson($PersonObj){
+    }
 
-    function deletePerson($id){}
+    function deletePerson($id){
+    }
 
     function loadAllPeople()
     {
-        $theQuery = "SELECT * FROM Person";
-        $result = $this->conn->query($theQuery);
-        $rows = [];
-        if ($result->num_rows > 0) {
-            while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
-                $rows[] = $row;
+        $TheQueryStr = "SELECT * FROM Person";
+        $QueryResultObj = $this->ConnectionObj->query($TheQueryStr);
+        $QueryReturnResultArr = [];
+
+        if ($QueryResultObj->num_rows > 0) {
+            while ($row = mysqli_fetch_array($QueryResultObj, MYSQLI_ASSOC)) {
+                $QueryReturnResultArr[] = $row;
             }
         }
-        return $rows;
+        return $QueryReturnResultArr;
     }
 
     function deleteAllPeople()
     {
-        $theQuery = "DELETE FROM Person";
-        $query = mysqli_query($this->conn, $theQuery);
+        $TheQueryStr = "DELETE FROM Person";
+        $QueryResultBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
 
-        if (!$query) {
-            echo "Failed inserting " . $this->conn->error;
+        if (!$QueryResultBool) {
+            echo "Failed inserting ".$this->ConnectionObj->error;
             return;
         }
-        return $query;
+        return $QueryResultBool;
     }
-
 }
 
-
-$servername = "127.0.0.1";
-$username = "user";
-$password = "secret";
-$database = "foundation_task";
-// Create connection
-$conn = new mysqli($servername, $username, $password, $database);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-    // echo("Connection failed. Please try again.");
-    // return;
+//Connection
+$ServerNameStr = "127.0.0.1";
+$UsernameStr = "user";
+$PasswordStr = "secret";
+$DatabaseStr = "foundation_task";
+$ConnectionObj = new mysqli($ServerNameStr, $UsernameStr, $PasswordStr, $DatabaseStr);
+if ($ConnectionObj->connect_error) {
+    die("Connection failed: ".$ConnectionObj->connect_error);
 }
 
-$logging = new Logging($conn);
-$person = new Person($conn);
+$LoggingObj = new Logging($ConnectionObj);
+$PersonObj = new Person($ConnectionObj);
+$ReturnDataObj = "";
 
-$currentTime = microtime(true);
-$timestamp = time();
-$currentDate = gmdate("Y-m-d H:i:s", $timestamp);
+$ReturnDataObj = json_encode($PersonObj->deleteAllPeople());
+$ReturnDataObj = json_encode($PersonObj->addMockData($PersonObj));
 
-//Doing cleanup before adding more
-$deleteAllPeopleResult = json_encode($person->deleteAllPeople());
-$addMockDataResult = json_encode($person->addMockData($person));
+$CurrentTimeFlt = microtime(true);
+$TimeStampInt = time();
+$CurrentDateStr = gmdate("Y-m-d H:i:s", $TimeStampInt);
+$LoggingDtoObj = new LoggingDto("loadAllPeople()", "loadAllPeople() DB Query", $CurrentDateStr, 0);
+$ReturnDataObj = json_encode($PersonObj->loadAllPeople());
+$LoggingDtoObj->QueryTimeInt = round(microtime(true) - $CurrentTimeFlt, 3) * 1000;
+$LoggingObj->createLog($LoggingDtoObj);
 
-if($addMockDataResult){
-    $loggingDto = new LoggingDto("loadAllPeople()", "loadAllPeople() DB Query", $currentDate, 0);
-    $dataResult = json_encode($person->loadAllPeople());
-    $loggingDto->queryTime = round(microtime(true) - $currentTime, 3) * 1000;
-    $logging->createLog($loggingDto);
-    echo $dataResult;
-}else{
-echo    "Adding mock data failed";
-}
+echo $ReturnDataObj;
+?>
