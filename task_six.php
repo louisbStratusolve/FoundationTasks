@@ -28,8 +28,9 @@ class Logging
 
     function createLog($log)
     {
+        // $strDate = $log->created->format('Y-m-d H:i:s');
         $theQuery = "
-            INSERT INTO Logging (Name, Description, Created, QueryTime) VALUES (
+            INSERT INTO Logging(Name, Description, Created, QueryTime) VALUES (
             '$log->name',
             '$log->description', 
             '$log->created', 
@@ -91,13 +92,16 @@ class Person
             new PersonDto('Ava', 'Harris', '1987-04-12', 'ava.harris@example.com', 36, null)
         ];
         foreach ($scaffoldedPersons as $scaffoldedPerson) {
+            // echo(json_encode($scaffoldedPerson));
             $person->createPerson($scaffoldedPerson);
         }
         return true;
     }
 
-    function createPerson($person){
-        $theQuery = "INSERT INTO Person(FirstName, Surname, DateOfBirth, EmailAddress, Age) VALUES (
+    function createPerson($person)
+    {
+        // $strDate = $person->dateOfBirth->format('Y-m-d H:i:s');
+        $theQuery = "INSERT INTO Person (FirstName, Surname, DateOfBirth, EmailAddress, Age) VALUES (
             '$person->firstName',
             '$person->surname', 
             '$person->dateOfBirth', 
@@ -111,13 +115,53 @@ class Person
             return;
         }
         return $query;
+
     }
 
-    function loadPerson($id){}
+    function loadPerson($id)
+    {
+        $theQuery = "SELECT Id, FirstName, Surname, DateOfBirth, EmailAddress, Age FROM Person where id=$id";
+        $result = $this->conn->query($theQuery);
+        $rows = [];
+        if ($result->num_rows > 0) {
+            while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
+                $rows[] = $row;
+            }
+        }
+        return $rows;
+    }
 
-    function savePerson($person){}
+    function savePerson($person)
+    {
+        // $strDate = $person->dateOfBirth->format('Y-m-d H:i:s');
+        $theQuery = "UPDATE Person SET 
+                        FirstName = '$person->firstName',
+                        Surname = '$person->surname', 
+                        DateOfBirth = '$person->dateOfBirth', 
+                        EmailAddress = '$person->emailAddress', 
+                        Age = '$person->age'
+                      WHERE Id = $person->id";
 
-    function deletePerson($id){}
+        $query = mysqli_query($this->conn, $theQuery);
+
+        if (!$query) {
+            echo "Failed inserting " . $this->conn->error;
+            return;
+        }
+        return $query;
+    }
+
+    function deletePerson($id)
+    {
+        $theQuery = "DELETE FROM Person WHERE Id = $id";
+        $query = mysqli_query($this->conn, $theQuery);
+
+        if (!$query) {
+            echo "Failed inserting " . $this->conn->error;
+            return;
+        }
+        return $query;
+    }
 
     function loadAllPeople()
     {
@@ -143,9 +187,7 @@ class Person
         }
         return $query;
     }
-
 }
-
 
 $servername = "127.0.0.1";
 $username = "user";
@@ -153,31 +195,53 @@ $password = "secret";
 $database = "foundation_task";
 // Create connection
 $conn = new mysqli($servername, $username, $password, $database);
-
-// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
-    // echo("Connection failed. Please try again.");
-    // return;
 }
 
 $logging = new Logging($conn);
 $person = new Person($conn);
+$returnData = "";
 
-$currentTime = microtime(true);
-$timestamp = time();
-$currentDate = gmdate("Y-m-d H:i:s", $timestamp);
-
-//Doing cleanup before adding more
-$deleteAllPeopleResult = json_encode($person->deleteAllPeople());
-$addMockDataResult = json_encode($person->addMockData($person));
-
-if($addMockDataResult){
-    $loggingDto = new LoggingDto("loadAllPeople()", "loadAllPeople() DB Query", $currentDate, 0);
-    $dataResult = json_encode($person->loadAllPeople());
-    $loggingDto->queryTime = round(microtime(true) - $currentTime, 3) * 1000;
-    $logging->createLog($loggingDto);
-    echo $dataResult;
-}else{
-echo    "Adding mock data failed";
+if ($_POST && !array_key_exists("_method", $_POST) && array_key_exists("Type", $_POST)) {
+        if ($_POST["Type"] == "allPeople") {
+            $currentTime = microtime(true);
+            $timestamp = time();
+            $currentDate = gmdate("Y-m-d H:i:s", $timestamp);
+            $loggingDto = new LoggingDto("loadAllPeople()", "loadAllPeople() DB Query", $currentDate, 0);
+            $returnData = json_encode($person->loadAllPeople());
+            $loggingDto->queryTime = round(microtime(true) - $currentTime, 3) * 1000;
+            $logging->createLog($loggingDto);
+        } else if ($_POST["Type"] == "addMockData") {
+            $returnData = json_encode($person->addMockData($person));
+            echo 'mock data added';
+        } else if ($_POST["Type"] == "createPerson") {
+            $personDto = new PersonDto($_POST["FirstName"], $_POST["Surname"], $_POST["DateOfBirth"], $_POST["EmailAddress"], $_POST["Age"], 0);
+            if (!$personDto->firstName == null && !$personDto->surname) {
+                echo "you need either a name or surname to create a person";
+                return;
+            } else {
+                $returnData = json_encode($person->createPerson($personDto));
+            }
+        }
+        echo $returnData;
+} else if ($_GET && array_key_exists("Id", $_GET)) {
+    $returnData = json_encode($person->loadPerson($_GET["Id"]));
+    echo $returnData;
+} else if (array_key_exists('_method', $_POST)) {
+    if ($_POST['_method'] === 'PUT') {
+        parse_str(file_get_contents("php://input"), $http_vars);
+        $personDto = new PersonDto($http_vars["FirstName"], $http_vars["Surname"], $http_vars["DateOfBirth"], $http_vars["EmailAddress"], $http_vars["Age"], $http_vars["Id"]);
+        $returnData = json_encode($person->savePerson($personDto));
+        echo $returnData;
+    } else if ($_POST['_method'] === 'DELETE') {
+        parse_str(file_get_contents("php://input"), $http_vars);
+        if (array_key_exists("Id", $http_vars)) {
+            $returnData = json_encode($person->deletePerson($http_vars["Id"]));
+        } else {
+            $returnData = json_encode($person->deleteAllPeople());
+        }
+        echo $returnData;
+    }
 }
+?>

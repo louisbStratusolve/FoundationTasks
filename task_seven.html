@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Persons</title>
+    <script crossorigin="anonymous"
+            integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw=="
+            referrerpolicy="no-referrer"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+          integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" rel="stylesheet">
+    <script crossorigin="anonymous"
+            integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
+            src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <script crossorigin="anonymous"
+            integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw=="
+            referrerpolicy="no-referrer"
+            src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css"
+          integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g=="
+          referrerpolicy="no-referrer" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+
+    <script>
+        function addMockData() {
+            $('.PersonTBody').empty().append(`<tr><th>loading....</th>`);
+            $.post("http://localhost:63342/PHPTest/task_six.php",
+                {"Type": "addMockData"},
+                function (data, status) {
+                    $('.PersonTBody').empty();
+                    if (data && data.length && status) {
+                        loadAllPeople();
+                    } else {
+                        let toast = {
+                            title: "Error!",
+                            message: "There was an error in adding the mocked data",
+                            status: TOAST_STATUS.DANGER,
+                            timeout: 5000
+                        }
+                        Toast.create(toast);
+                    }
+                });
+        }
+
+        function isValidCreate() {
+            $("input").removeClass("border").removeClass("border-danger");
+
+            isValid = true;
+            if (!$('#createFirstNameInput').val()) {
+                $('#createFirstNameInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#createSurnameInput').val()) {
+                $('#createSurnameInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#createDateOfBirthInput').val()) {
+                $('#createDateOfBirthInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#createEmailAddressInput').val()) {
+                $('#createEmailAddressInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#createAgeInput').val() || $('#createAgeInput').val().toLowerCase().indexOf("e") >= 0) {
+                $('#createAgeInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            return isValid;
+        }
+
+        function isValidUpdate() {
+            $("input").removeClass("border").removeClass("border-danger");
+
+            isValid = true;
+            if (!$('#editFirstNameInput').val()) {
+                $('#editFirstNameInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#editSurnameInput').val()) {
+                $('#editSurnameInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#editDateOfBirthInput').val()) {
+                $('#editDateOfBirthInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#editEmailAddressInput').val()) {
+                $('#editEmailAddressInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            if (!$('#editAgeInput').val() || $('#editAgeInput').val().toLowerCase().indexOf("e") >= 0) {
+                $('#editAgeInput').addClass("border").addClass("border-danger");
+                isValid = false;
+            }
+            return isValid;
+        }
+
+        function createPerson() {
+            if (!isValidCreate()) {
+                toastr.error("Please make sure all the fields are filled in correctly");
+                return;
+            }
+            var person = {
+                Id: $('#createIdInput').val(),
+                FirstName: $('#createFirstNameInput').val(),
+                Surname: $('#createSurnameInput').val(),
+                DateOfBirth: $('#createDateOfBirthInput').val(),
+                EmailAddress: $('#createEmailAddressInput').val(),
+                Age: $('#createAgeInput').val(),
+                Type: "createPerson"
+            };
+
+            $.ajax({
+                url: "http://localhost:63342/PHPTest/task_six.php",
+                type: 'POST',
+                data: person,
+                success: function (result) {
+                    console.log("saved person: ", result);
+                    toastr.success("Successfully saved the person");
+                    $('#createPersonModal').modal('hide');
+                    loadAllPeople();
+                },
+                failure: function (result) {
+                    console.log("create person error:", result)
+                    toastr.error("Error in creating the person. Please try again");
+                }
+            });
+        }
+
+        function loadPerson(id) {
+            $('#editIdInput').val("");
+            $('#editFirstNameInput').val("");
+            $('#editSurnameInput').val("");
+            $('#editDateOfBirthInput').val(null);
+            $('#editEmailAddressInput').val(null);
+            $('#editAgeInput').val(0);
+
+            $.ajax({
+                url: "http://localhost:63342/PHPTest/task_six.php",
+                type: 'GET',
+                data: {Id: id},
+                success: function (data) {
+                    if (data) {
+                        data = JSON.parse(data);
+                    }
+                    // console.log("DATA =>", data)
+                    let item = data[0];
+                    $('#editIdInput').val(item.Id);
+                    $('#editFirstNameInput').val(item.FirstName);
+                    $('#editSurnameInput').val(item.Surname);
+                    $('#editDateOfBirthInput').val(item.DateOfBirth);
+                    $('#editEmailAddressInput').val(item.EmailAddress);
+                    $('#editAgeInput').val(item.Age);
+
+                    toastr.success("Successfully loaded the person")
+                },
+                failure: function (result) {
+                    toastr.error("Error in loading the person. Please try again");
+                }
+            });
+        }
+
+        function savePerson() {
+            if (!isValidUpdate()) {
+                toastr.error("Please make sure all the fields are filled in correctly");
+                return;
+            }
+            editPersonDto = {
+                Id: $('#editIdInput').val(),
+                FirstName: $('#editFirstNameInput').val(),
+                Surname: $('#editSurnameInput').val(),
+                DateOfBirth: $('#editDateOfBirthInput').val(),
+                EmailAddress: $('#editEmailAddressInput').val(),
+                Age: $('#editAgeInput').val(),
+                _method: "PUT"
+            }
+            $.ajax({
+                url: "http://localhost:63342/PHPTest/task_six.php",
+                type: 'POST',
+                data: editPersonDto,
+                success: function (result) {
+                    toastr.success("Successfully saved the person");
+                    $('#editPersonModal').modal('hide');
+                    loadAllPeople();
+                },
+                failure: function (result) {
+                    toastr.success("Error in saving the person. Please try again");
+                }
+            });
+
+        }
+
+        function deletePerson(id) {
+            $.ajax({
+                url: "http://localhost:63342/PHPTest/task_six.php",
+                type: 'POST',
+                data: {
+                    Id: id,
+                    _method: "DELETE"
+                },
+                success: function (result) {
+                    toastr.success("Successfully deleted the person");
+                    $('#deletePersonModal').modal('hide');
+                    loadAllPeople();
+                },
+                failure: function (result) {
+                    toastr.success("Error in saving the person. Please try again");
+                }
+            });
+        }
+
+        function loadAllPeople() {
+            $('.PersonTBody').empty().append(`<tr><th>loading....</th>`);
+            $.post("http://localhost:63342/PHPTest/task_six.php",
+                {Type: "allPeople"},
+                function (data, status) {
+                    $('.PersonTBody').empty();
+                    if (data && data.length && status)
+                        data = JSON.parse(data);
+                    for (let i = 0; i < data.length; i++) {
+                        let item = data[i];
+                        var tr = `<tr><th scope="row">` + item.Id + `</th>
+                                        <td>` + item.FirstName + ' ' + item.Surname + `</td>
+                                        <td>` + item.DateOfBirth + `</td>
+                                        <td>` + item.EmailAddress + `</td>
+                                        <td>` + item.Age + `</td>
+                                       <td>
+                                            <div aria-label="Actions" class="btn-group action-group" role="group">
+                                                <button class="btn btn-secondary edit"  person-id="` + item.Id + `" data-target="#editPersonModal" data-toggle="modal"
+                                                        type="button"><span class="material-icons">
+                                                            edit
+                                                            </span>
+
+                                                </button>
+                                                <button class="btn btn-danger delete"  person-id="` + item.Id + `" data-target="#deletePersonModal" data-toggle="modal" type="button">
+                                                <span class="material-icons">
+                                                        delete
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>`;
+                        $('.PersonTBody').append(tr);
+                    }
+                });
+        }
+
+        function deleteAllPeople() {
+            $.ajax({
+                url: "http://localhost:63342/PHPTest/task_six.php",
+                type: 'POST',
+                data: {
+                    _method: "DELETE"
+                },
+                success: function (result) {
+                    toastr.success("Successfully deleted all people");
+                    $('#deleteAllPersonsModal').modal('hide');
+                    loadAllPeople();
+                },
+                failure: function (result) {
+                    toastr.success("Error in deleting everyone. Please try again");
+                }
+            });
+
+        }
+
+        $(document).ready(function () {
+            loadAllPeople();
+            $('#addMockDataButton').click(function () {
+                addMockData();
+            });
+            $('#container').click(function (e) {
+                if ($(e.target).hasClass('edit')) {
+                    loadPerson($(e.target).attr('person-id'))
+                }
+                if ($(e.target).hasClass('delete')) {
+                    $('#deleteSubmitButton').attr('person-id', $(e.target).attr('person-id'))
+                }
+            });
+            $('#deleteSubmitButton').click(function (e) {
+                deletePerson($(e.target).attr('person-id'));
+            });
+            $('#editSubmitButton').click(function (e) {
+                savePerson($(e.target).attr('person-id'));
+            });
+            $('#deleteAllSubmitButton').click(function (e) {
+                deleteAllPeople();
+            });
+
+            $('#createSubmitButton').click(function (e) {
+                delete createPerson();
+            });
+
+        });
+    </script>
+
+</head>
+<body>
+<div class="container shadow p-3 mb-5 bg-white rounded" id="container" style="margin-top:10px;">
+    <div>
+        <div><span class="h1">People</span>
+            <div aria-label="Basic example" class="btn-group float-right" role="group">
+                <div class="btn btn-secondary" id="addMockDataButton" type="button">
+                  <span class="material-icons">
+                        group_add
+                  </span> Add 10 rows mock data
+                </div>
+                <div class="btn btn-danger" data-target="#deleteAllPersonsModal" data-toggle="modal">
+                    <span class="material-icons">
+                        delete_sweep
+                    </span> Delete all people
+                </div>
+                <div class="btn btn-primary" data-target="#createPersonModal" data-toggle="modal">
+                  <span class="material-icons">
+                        person_add
+                    </span> Add new person
+                </div>
+
+            </div>
+
+            <hr/>
+
+        </div>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Date of birth</th>
+                <th scope="col">Email</th>
+                <th scope="col">Age</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody class="PersonTBody">
+
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+
+<div aria-hidden="true" aria-labelledby="editPersonModal" class="modal fade" id="editPersonModal" tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit person</h5>
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="editPersonModalContent">
+                <!--                <p>Person Details goes here</p>-->
+                <div>
+                    <input class="form-control hidden" id="editIdInput" style="display:none;" type="text">
+                    <div class="form-group">
+                        <label for="editFirstNameInput">First name</label>
+                        <input class="form-control" id="editFirstNameInput" placeholder="John"
+                               type="text">
+                    </div>
+                    <div class="form-group">
+                        <label for="editSurnameInput">First name</label>
+                        <input class="form-control" id="editSurnameInput" placeholder="Doe"
+                               type="text">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmailAddressInput">Email address</label>
+                        <input class="form-control" id="editEmailAddressInput" placeholder="name@example.com"
+                               type="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="editDateOfBirthInput">Date of birth</label>
+                        <input class="form-control" id="editDateOfBirthInput" placeholder="e.g. Doe"
+                               type="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="editAgeInput">Age</label>
+                        <input class="form-control" id="editAgeInput" placeholder=""
+                               type="number">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="editSubmitButton" type="button">Save changes</button>
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div aria-hidden="true" aria-labelledby="deleteAllPersonsModal" class="modal fade" id="deleteAllPersonsModal"
+     tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete EVERYONE</h5>
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="danger">You are going to delete EVERYONE. Are you sure?</p>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" id="deleteAllSubmitButton" type="button">DELETE ALL</button>
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div aria-hidden="true" aria-labelledby="createPersonModal" class="modal fade" id="createPersonModal" tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create person</h5>
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="createPersonModalContent">
+                <p>Person Details goes here</p>
+                <div>
+                    <div class="form-group">
+                        <label for="createFirstNameInput">First name</label>
+                        <input class="form-control" id="createFirstNameInput" placeholder="John"
+                               type="text">
+                    </div>
+                    <div class="form-group">
+                        <label for="createSurnameInput">First name</label>
+                        <input class="form-control" id="createSurnameInput" placeholder="Doe"
+                               type="text">
+                    </div>
+                    <div class="form-group">
+                        <label for="createEmailAddressInput">Email address</label>
+                        <input class="form-control" id="createEmailAddressInput" placeholder="name@example.com"
+                               type="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="createDateOfBirthInput">Date of birth</label>
+                        <input class="form-control" id="createDateOfBirthInput" placeholder="e.g. Doe"
+                               type="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="createAgeInput">Age</label>
+                        <input class="form-control" id="createAgeInput" placeholder=""
+                               type="number">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="createSubmitButton" type="button">Create</button>
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div aria-hidden="true" aria-labelledby="editPersonModal" class="modal fade" id="deletePersonModal" tabindex="-1">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Are you sure?</h5>
+                <button aria-label="Close" class="close" data-dismiss="modal" type="button">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="deletePersonModalContent">
+                <p>Are you sure you want to delete this person?</p>
+
+                <div class="modal-footer">
+                    <button class="btn btn-danger" id="deleteSubmitButton" type="button">Delete</button>
+                    <button class="btn btn-secondary" data-dismiss="modal" type="button">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toasty position-fixed bottom-0 right-0 p-3" style="z-index: 5; right: 0; bottom: 0;">
+    <div aria-atomic="true" aria-live="assertive" class="toast hide" data-delay="2000" id="liveToast" role="alert">
+        <div class="toast-header">
+            <!--            <img src="..." class="rounded mr-2" alt="...">-->
+            <strong class="mr-auto">Hello!</strong>
+            <!--            <small>11 mins ago</small>-->
+            <button aria-label="Close" class="ml-2 mb-1 close" data-dismiss="toast" type="button">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body">
+            Hello!
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
