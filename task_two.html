@@ -14,9 +14,9 @@
     <script>
         $(document).ready(function () {
             $("button").click(function () {
-                $.post("http://localhost:63342/PHPTest/task_two.php",
+                $.post("http://localhost:63342/FoundationTasks/task_two.php",
                     {
-                        fibonacciSequenceNumber: $(".fibonacciSequenceNumber").val(),
+                        FibonacciSequenceNumber: $(".fibonacciSequenceNumber").val(),
                     },
                     function (data, status) {
                         $(".result").removeClass("hidden");
@@ -33,8 +33,8 @@
 <div class="container shadow p-3 mb-5 bg-white rounded" id="container" style="margin-top:10px;">
 
     <div class="form-group">
-        <label for="fibonacciSequenceNumber">Enter Fibonacci number:</label>
-        <input class="form-control fibonacciSequenceNumber" id="fibonacciSequenceNumber" placeholder=""
+        <label for="txtFibonacciSequenceNumber">Enter Fibonacci number:</label>
+        <input class="form-control fibonacciSequenceNumber" id="txtFibonacciSequenceNumber" placeholder=""
                type="number">
     </div>
     <button class="btn btn-primary" type="submit">Submit</button>
