@@ -2,22 +2,21 @@
 
 class Palindrome
 {
-    public static function isPalindrome($word)
-    {
-        $word = mb_strtolower($word);
-        $word = preg_replace('/\s+/', '', $word);
+    public static function isPalindrome($WordStr) {
+        $WordStr = mb_strtolower($WordStr);
+        $WordStr = preg_replace('/\s+/', '', $WordStr);
 
-        $isReallyPalindrome = true;
-        $theString = str_split($word);
-        $theReverseString = array_reverse($theString);
+        $IsReallyPalindromeBool = true;
+        $SplitStringArr = str_split($WordStr);
+        $ReverseStringArr = array_reverse($SplitStringArr);
 
         for ($x = 0; $x <= 10; $x++) {
-            if ($theString[$x] != $theReverseString[$x]) {
-                $isReallyPalindrome = false;
+            if ($SplitStringArr[$x] != $ReverseStringArr[$x]) {
+                $IsReallyPalindromeBool = false;
                 break;
             }
         }
-        return $isReallyPalindrome;
+        return $IsReallyPalindromeBool;
     }
 }
 
