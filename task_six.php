@@ -137,7 +137,7 @@ class Person
                         DateOfBirth = '$PersonObj->DateOfBirthStr', 
                         EmailAddress = '$PersonObj->EmailAddressStr', 
                         Age = '$PersonObj->AgeInt'
-                      WHERE Id = $PersonObj->idInt";
+                      WHERE Id = $PersonObj->IdInt";
 
         $QueryResultBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
 
@@ -214,7 +214,7 @@ if ($_POST && !array_key_exists("_method", $_POST) && array_key_exists("Type", $
         $ReturnDataObj = json_encode($PersonObj->addMockData($PersonObj));
         echo 'mock data added';
     } else if ($_POST["Type"] == "createPerson") {
-        $PersonDtoObj = new dto\PersonDto($_POST["FirstName"], $_POST["Surname"], $_POST["DateOfBirth"], $_POST["EmailAddress"], $_POST["Age"], 0);
+        $PersonDtoObj = new PersonDto($_POST["FirstName"], $_POST["Surname"], $_POST["DateOfBirth"], $_POST["EmailAddress"], $_POST["Age"], 0);
         if (!$PersonDtoObj->FirstNameStr == null && !$PersonDtoObj->SurnameStr) {
             echo "you need either a name or surname to create a person";
             return;

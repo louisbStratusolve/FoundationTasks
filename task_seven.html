@@ -163,13 +163,13 @@
             });
         }
 
-        function savePerson() {
+        function savePerson(id) {
             if (!isValidUpdate()) {
                 toastr.error("Please make sure all the fields are filled in correctly");
                 return;
             }
             editPersonDto = {
-                Id: $('#editIdInput').val(),
+                Id: id,
                 FirstName: $('#editFirstNameInput').val(),
                 Surname: $('#editSurnameInput').val(),
                 DateOfBirth: $('#editDateOfBirthInput').val(),
@@ -275,6 +275,7 @@
             $('#container').click(function (e) {
                 if ($(e.target).hasClass('edit') || $(e.target).parents('.edit').length) {
                     var id = $(e.target).attr('person-id') || $(e.target).parents('.edit').attr('person-id');
+                    $('#editSubmitButton').attr('person-id', id);
                     loadPerson(id);
                 }
                 else if ($(e.target).hasClass('delete') || $(e.target).parents('.delete').length) {
@@ -286,7 +287,7 @@
                 deletePerson($(e.target).attr('person-id'));
             });
             $('#editSubmitButton').click(function (e) {
-                savePerson($(e.target).attr('person-id'));
+                savePerson( $('#editSubmitButton').attr('person-id'));
             });
             $('#deleteAllSubmitButton').click(function (e) {
                 deleteAllPeople();
@@ -295,6 +296,31 @@
             $('#createSubmitButton').click(function (e) {
                 delete createPerson();
             });
+            $('#editDateOfBirthInput').change(function(){
+                var dobInput = $('#editDateOfBirthInput').val();
+                var age = 0;
+                if(dobInput && Date.parse(dobInput)){
+                    var dob = new Date(dobInput);
+                    var today = new Date();
+                    var dayDiff = Math.ceil(today - dob) / (1000 * 60 * 60 * 24 * 365);
+                    age = parseInt(dayDiff);
+                    if(age<0 || age>120){age=0;}
+                }
+                $('#editAgeInput').val(age);
+            });
+            $('#createDateOfBirthInput').change(function(){
+                var dobInput = $('#createDateOfBirthInput').val();
+                var age = 0;
+                if(dobInput && Date.parse(dobInput)){
+                    var dob = new Date(dobInput);
+                    var today = new Date();
+                    var dayDiff = Math.ceil(today - dob) / (1000 * 60 * 60 * 24 * 365);
+                    age = parseInt(dayDiff);
+                }
+                if(age<0 || age>120){age=0;}
+                $('#createAgeInput').val(age);
+            });
+
 
         });
     </script>
@@ -382,7 +408,7 @@
                     </div>
                     <div class="form-group">
                         <label for="editAgeInput">Age</label>
-                        <input class="form-control" id="editAgeInput" placeholder=""
+                        <input class="form-control" disabled id="editAgeInput" placeholder=""
                                type="number">
                     </div>
                 </div>
@@ -452,7 +478,7 @@
                     </div>
                     <div class="form-group">
                         <label for="createAgeInput">Age</label>
-                        <input class="form-control" id="createAgeInput" placeholder=""
+                        <input class="form-control" disabled id="createAgeInput" placeholder=""
                                type="number">
                     </div>
                 </div>
