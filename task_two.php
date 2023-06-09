@@ -1,7 +1,7 @@
 <?php
     // LOOP CODE:
     function getFibonacciSequence($LastNumberInt) {
-        $OutputArr = [];
+        $OutputArr = [0,1]; //TODO ADD IN
         $N1Int = 1;
         $N2Int = 0;
         $CurrentValueInt = 0;
@@ -15,7 +15,7 @@
         return $OutputArr;
     }
 
-// RECURSIVE CODE
+// TODO: RECURSIVE CODE MAKE TOTALLY RECURSIVE
     function getFibonacciByIndexRecursive($NumberInt) {
         if ($NumberInt == 0) {
             return 0;
@@ -29,17 +29,17 @@
 
     function getFibonacciSequenceRecursive($LastNumberInt) {
         $CurrentNumberInt = 0;
-        $Result = 0;
-        $OutputArray = [];
-        while ($Result < $LastNumberInt) {
-            $Result = getFibonacciByIndexRecursive($CurrentNumberInt);
-            $OutputArray[] = $Result;
+        $ResultInt = 0;
+        $OutputArr = [];
+        while ($ResultInt < $LastNumberInt) {
+            $ResultInt = getFibonacciByIndexRecursive($CurrentNumberInt);
+            $OutputArr[] = $ResultInt;
             $CurrentNumberInt++;
         }
-        return $OutputArray;
+        return $OutputArr;
     }
 
-    echo(json_encode(getFibonacciSequenceRecursive(34)));
-    echo(json_encode(getFibonacciSequence(34)));
+    echo(json_encode(getFibonacciSequenceRecursive(69)));
+    echo(json_encode(getFibonacciSequence(69)));
 
 ?>
