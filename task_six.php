@@ -1,14 +1,13 @@
 <?php
-class LoggingDto
-{
+
+class LoggingDto {
     public $IdInt;
     public $NameStr;
     public $DescriptionStr;
     public $CreatedStr;
     public $QueryTimeInt;
 
-    function __construct($NameStr, $DescriptionStr, $CreatedStr, $QueryTimeInt)
-    {
+    function __construct($NameStr, $DescriptionStr, $CreatedStr, $QueryTimeInt) {
         $this->NameStr = $NameStr;
         $this->DescriptionStr = $DescriptionStr;
         $this->CreatedStr = $CreatedStr;
@@ -16,8 +15,8 @@ class LoggingDto
     }
 
 }
-class PersonDto
-{
+
+class PersonDto {
     public $IdInt;
     public $FirstNameStr;
     public $SurnameStr;
@@ -25,8 +24,7 @@ class PersonDto
     public $EmailAddressStr;
     public $AgeInt;
 
-    function __construct($FirstNameStr, $SurnameStr, $DateOfBirthDate, $EmailAddressStr, $AgeInt, $IdInt)
-    {
+    function __construct($FirstNameStr, $SurnameStr, $DateOfBirthDate, $EmailAddressStr, $AgeInt, $IdInt) {
         $this->FirstNameStr = $FirstNameStr;
         $this->SurnameStr = $SurnameStr;
         $this->DateOfBirthStr = $DateOfBirthDate;
@@ -36,17 +34,16 @@ class PersonDto
     }
 
 }
-class Logging
-{
+
+class Logging {
     private $ConnectionObj = null;
-    function __construct($ConnectionObj)
-    {
+
+    function __construct($ConnectionObj) {
         $this->ConnectionObj = $ConnectionObj;
     }
 
-    function createLog($Log)
-    {
-        $TheQueryStr = "
+    function createLog($Log) {
+        $QueryStr = "
             INSERT INTO Logging (Name, Description, Created, QueryTime) 
             VALUES (
             '$Log->NameStr',
@@ -54,27 +51,21 @@ class Logging
             '$Log->CreatedStr', 
             '$Log->QueryTimeInt')";
 
-        $QueryWasSuccessfulBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
-
-        if (!$QueryWasSuccessfulBool) {
+        if (!mysqli_query($this->ConnectionObj, $QueryStr)) {
             echo "Failed inserting ".$this->ConnectionObj->error;
         }
-        return $TheQueryStr;
+        return $QueryStr;
     }
-
-
 }
-class Person
-{
+
+class Person {
     private $ConnectionObj = null;
 
-    function __construct($ConnectionObj)
-    {
+    function __construct($ConnectionObj) {
         $this->ConnectionObj = $ConnectionObj;
     }
 
-    function addMockData($PersonObjObj)
-    {
+    function addMockData($PersonObjObj) {
         $ScaffoldedPersonsArr = [
             new PersonDto('John', 'Smith', '1990-05-15', 'john.smith@example.com', 33, null),
             new PersonDto('Emma', 'Johnson', '1982-09-10', 'emma.johnson@example.com', 41, null),
@@ -87,45 +78,63 @@ class Person
             new PersonDto('William', 'Thomas', '1991-12-03', 'william.thomas@example.com', 31, null),
             new PersonDto('Ava', 'Harris', '1987-04-12', 'ava.harris@example.com', 36, null)
         ];
-        foreach ($ScaffoldedPersonsArr as $ScaffoldedPersonObj) {
-            $PersonObjObj->createPerson($ScaffoldedPersonObj);
-        }
+        $this->createPeople($ScaffoldedPersonsArr);
         return true;
     }
 
-    function createPerson($PersonObj)
-    {
-        $TheQueryStr = "INSERT INTO Person 
-            (FirstName, Surname, DateOfBirth, EmailAddress, Age) 
-            VALUES (
-            '$PersonObj->FirstNameStr',
-            '$PersonObj->SurnameStr', 
-            '$PersonObj->DateOfBirthStr', 
-            '$PersonObj->EmailAddressStr', 
-            '$PersonObj->AgeInt')";
+    //TODO change to createPeople($PersonArr), and
+    //TODO Remove word "THE"
+    //TODO TASK 2,5,6
+    //TODO change PersonDto()
+    //$PersonObj = (object)[
+    //'FirstName' => 'Brett',
+    //]
 
-        $QueryWasSuccessfulBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
+    //TODO createPeople([$PersonObj]){}
+    //  insertRows("Person", $PersonArr) //
+    //TODO: col names try build wit this for propnames
+    //        foreach ($obj as $key => $value) {
+    //            echo "$key => $value\n";
+    //        }
 
-        if (!$QueryWasSuccessfulBool) {
+    function createPeople($PeopleArr) {
+        $KeysArr = array_keys($PeopleArr["0"]);
+        $ValuesArr = [];
+        foreach ($PeopleArr as $PersonObj) {
+            foreach ($PersonObj as $key => $value) {
+                $ValuesArr[] = array_values($value);
+            }
+            $this->insertRecords("Person", $KeysArr, $ValuesArr);
+        }
+    }
+
+    function insertRecords($TableNameStr, $KeyArr, $ValuesArr) {
+        $TheQueryStr = "INSERT INTO $TableNameStr (implode(', ', $KeyArr)) VALUES (";
+        for ($RowIteratorInt = 0; $RowIteratorInt <= count($ValuesArr); $RowIteratorInt++) {
+            $Row = $ValuesArr[$RowIteratorInt];
+            $TheQueryStr .= "(implode(', ', $Row))";
+        }
+        echo $TheQueryStr;
+        $QuerySuccessful = mysqli_query($this->ConnectionObj, $TheQueryStr);
+
+        if (!$QuerySuccessful) {
             echo "Failed inserting ".$this->ConnectionObj->error;
             return;
         }
-        return $QueryWasSuccessfulBool;
-
+        return $QuerySuccessful;
     }
 
-    function loadPerson($IdInt){
+    function loadPerson($IdInt) {
     }
 
-    function savePerson($PersonObj){
+    function savePerson($PersonObj) {
     }
 
-    function deletePerson($id){
+    function deletePerson($id) {
     }
 
-    function loadAllPeople()
-    {
-        $TheQueryStr = "SELECT * FROM Person";
+    function loadAllPeople() {
+        $TheQueryStr = "SELECT * FROM Person;";
         $QueryResultObj = $this->ConnectionObj->query($TheQueryStr);
         $QueryReturnResultArr = [];
 
@@ -137,8 +146,7 @@ class Person
         return $QueryReturnResultArr;
     }
 
-    function deleteAllPeople()
-    {
+    function deleteAllPeople() {
         $TheQueryStr = "DELETE FROM Person";
         $QueryResultBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
 
@@ -148,6 +156,7 @@ class Person
         }
         return $QueryResultBool;
     }
+
 }
 
 //Connection
@@ -176,4 +185,6 @@ $LoggingDtoObj->QueryTimeInt = round(microtime(true) - $CurrentTimeFlt, 3) * 100
 $LoggingObj->createLog($LoggingDtoObj);
 
 echo $ReturnDataObj;
+
+
 ?>
