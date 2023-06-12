@@ -138,25 +138,25 @@ class Person {
 
     function insertRecords($TableNameStr, $KeyArr, $ValueArr) {
         $KeyStr = implode(', ', $KeyArr);
-        $TheQueryStr = "INSERT INTO $TableNameStr ($KeyStr) VALUES ";
+        $QueryStr = "INSERT INTO $TableNameStr ($KeyStr) VALUES ";
         for ($RowIteratorInt = 0; $RowIteratorInt < count($ValueArr); $RowIteratorInt++) {
             $Row = $ValueArr[$RowIteratorInt];
-            $TheQueryStr .= "(";
+            $QueryStr .= "(";
             for ($CellIteratorInt = 0; $CellIteratorInt < count($Row); $CellIteratorInt++) {
-                $TheQueryStr .= "'$Row[$CellIteratorInt]'";
+                $QueryStr .= "'$Row[$CellIteratorInt]'";
                 if ($CellIteratorInt != count($Row)-1) {
-                    $TheQueryStr .= ", ";
+                    $QueryStr .= ", ";
                 }
             }
             if ($RowIteratorInt != count($ValueArr)-1) {
-                $TheQueryStr .= "), ";
+                $QueryStr .= "), ";
             } else {
-                $TheQueryStr .= ")";
+                $QueryStr .= ")";
             }
         }
 
-        $TheQueryStr = rtrim($TheQueryStr,",");
-        $QuerySuccessful = mysqli_query($this->ConnectionObj, $TheQueryStr);
+        $QueryStr = rtrim($QueryStr,",");
+        $QuerySuccessful = mysqli_query($this->ConnectionObj, $QueryStr);
         if (!$QuerySuccessful) {
             echo "Failed inserting ".$this->ConnectionObj->error;
             return;
@@ -174,8 +174,8 @@ class Person {
     }
 
     function loadAllPeople() {
-        $TheQueryStr = "SELECT * FROM Person;";
-        $QueryResultObj = $this->ConnectionObj->query($TheQueryStr);
+        $QueryStr = "SELECT * FROM Person;";
+        $QueryResultObj = $this->ConnectionObj->query($QueryStr);
         $QueryReturnResultArr = [];
 
         if ($QueryResultObj->num_rows > 0) {
@@ -187,8 +187,8 @@ class Person {
     }
 
     function deleteAllPeople() {
-        $TheQueryStr = "DELETE FROM Person";
-        $QueryResultBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
+        $QueryStr = "DELETE FROM Person";
+        $QueryResultBool = mysqli_query($this->ConnectionObj, $QueryStr);
 
         if (!$QueryResultBool) {
             echo "Failed inserting ".$this->ConnectionObj->error;
@@ -196,7 +196,6 @@ class Person {
         }
         return $QueryResultBool;
     }
-
 }
 
 //Connection
