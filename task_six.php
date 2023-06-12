@@ -65,19 +65,40 @@ class Person {
         $this->ConnectionObj = $ConnectionObj;
     }
 
-    function addMockData($PersonObjObj) {
+    function addMockData() {
         $ScaffoldedPersonsArr = [
-            new PersonDto('John', 'Smith', '1990-05-15', 'john.smith@example.com', 33, null),
-            new PersonDto('Emma', 'Johnson', '1982-09-10', 'emma.johnson@example.com', 41, null),
-            new PersonDto('Michael', 'Brown', '1978-07-23', 'michael.brown@example.com', 45, null),
-            new PersonDto('Sophia', 'Miller', '1995-03-19', 'sophia.miller@example.com', 28, null),
-            new PersonDto('Daniel', 'Wilson', '1988-11-08', 'daniel.wilson@example.com', 33, null),
-            new PersonDto('Olivia', 'Davis', '1992-02-14', 'olivia.davis@example.com', 31, null),
-            new PersonDto('James', 'Anderson', '1984-06-30', 'james.anderson@example.com', 39, null),
-            new PersonDto('Isabella', 'Taylor', '1997-08-25', 'isabella.taylor@example.com', 25, null),
-            new PersonDto('William', 'Thomas', '1991-12-03', 'william.thomas@example.com', 31, null),
-            new PersonDto('Ava', 'Harris', '1987-04-12', 'ava.harris@example.com', 36, null)
+            (object)['FirstName' => 'John', 'Surname' => 'Smith', 'DateOfBirth' => '1990-05-15',
+                'EmailAddress' => 'john.smith@example.com', 'Age' => 33
+            ],
+            (object)['FirstName' => 'Emma', 'Surname' => 'Johnson', 'DateOfBirth' => '1982-09-10',
+                'EmailAddress' => 'emma.johnson@example.com', 'Age' => 41
+            ],
+            (object)['FirstName' => 'Michael', 'Surname' => 'Brown', 'DateOfBirth' => '1978-07-23',
+                'EmailAddress' => 'michael.brown@example.com', 'Age' => 45
+            ],
+            (object)['FirstName' => 'Sophia', 'Surname' => 'Miller', 'DateOfBirth' => '1995-03-19',
+                'EmailAddress' => 'sophia.miller@example.com', 'Age' => 28
+            ],
+            (object)['FirstName' => 'Daniel', 'Surname' => 'Wilson', 'DateOfBirth' => '1988-11-08',
+                'EmailAddress' => 'daniel.wilson@example.com', 'Age' => 33
+            ],
+            (object)['FirstName' => 'Olivia', 'Surname' => 'Davis', 'DateOfBirth' => '1992-02-14',
+                'EmailAddress' => 'olivia.davis@example.com', 'Age' => 31
+            ],
+            (object)['FirstName' => 'James', 'Surname' => 'Anderson', 'DateOfBirth' => '1984-06-30',
+                'EmailAddress' => 'james.anderson@example.com', 'Age' => 39
+            ],
+            (object)['FirstName' => 'Isabella', 'Surname' => 'Taylor', 'DateOfBirth' => '1997-08-25',
+                'EmailAddress' => 'isabella.taylor@example.com', 'Age' => 25
+            ],
+            (object)['FirstName' => 'William', 'Surname' => 'Thomas', 'DateOfBirth' => '1991-12-03',
+                'EmailAddress' => 'william.thomas@example.com', 'Age' => 31
+            ],
+            (object)['FirstName' => 'Ava', 'Surname' => 'Harris', 'DateOfBirth' => '1987-04-12',
+                'EmailAddress' => 'ava.harris@example.com', 'Age' => 36
+            ]
         ];
+
         $this->createPeople($ScaffoldedPersonsArr);
         return true;
     }
@@ -98,25 +119,44 @@ class Person {
     //        }
 
     function createPeople($PeopleArr) {
-        $KeysArr = array_keys($PeopleArr["0"]);
-        $ValuesArr = [];
-        foreach ($PeopleArr as $PersonObj) {
-            foreach ($PersonObj as $key => $value) {
-                $ValuesArr[] = array_values($value);
-            }
-            $this->insertRecords("Person", $KeysArr, $ValuesArr);
+        //echo(json_encode($PeopleArr));
+        $FirstElement = reset($PeopleArr);
+        $KeyArr = [];
+        foreach ($FirstElement as $KeyStr => $ValueStr) {
+            $KeyArr[] = $KeyStr;
         }
+        $ValueArr = [];
+        foreach ($PeopleArr as $PersonObj) {
+            $PersonValueArr = [];
+            foreach ($PersonObj as $PersonPropertyKeyStr => $PersonPropertyValueStr) {
+                $PersonValueArr[] = $PersonPropertyValueStr;
+            }
+            $ValueArr[] = $PersonValueArr;
+        }
+        $this->insertRecords("Person", $KeyArr, $ValueArr);
     }
 
-    function insertRecords($TableNameStr, $KeyArr, $ValuesArr) {
-        $TheQueryStr = "INSERT INTO $TableNameStr (implode(', ', $KeyArr)) VALUES (";
-        for ($RowIteratorInt = 0; $RowIteratorInt <= count($ValuesArr); $RowIteratorInt++) {
-            $Row = $ValuesArr[$RowIteratorInt];
-            $TheQueryStr .= "(implode(', ', $Row))";
+    function insertRecords($TableNameStr, $KeyArr, $ValueArr) {
+        $KeyStr = implode(', ', $KeyArr);
+        $TheQueryStr = "INSERT INTO $TableNameStr ($KeyStr) VALUES ";
+        for ($RowIteratorInt = 0; $RowIteratorInt < count($ValueArr); $RowIteratorInt++) {
+            $Row = $ValueArr[$RowIteratorInt];
+            $TheQueryStr .= "(";
+            for ($CellIteratorInt = 0; $CellIteratorInt < count($Row); $CellIteratorInt++) {
+                $TheQueryStr .= "'$Row[$CellIteratorInt]'";
+                if ($CellIteratorInt != count($Row)-1) {
+                    $TheQueryStr .= ", ";
+                }
+            }
+            if ($RowIteratorInt != count($ValueArr)-1) {
+                $TheQueryStr .= "), ";
+            } else {
+                $TheQueryStr .= ")";
+            }
         }
-        echo $TheQueryStr;
-        $QuerySuccessful = mysqli_query($this->ConnectionObj, $TheQueryStr);
 
+        $TheQueryStr = rtrim($TheQueryStr,",");
+        $QuerySuccessful = mysqli_query($this->ConnectionObj, $TheQueryStr);
         if (!$QuerySuccessful) {
             echo "Failed inserting ".$this->ConnectionObj->error;
             return;
@@ -174,7 +214,7 @@ $PersonObj = new Person($ConnectionObj);
 $ReturnDataObj = "";
 
 $ReturnDataObj = json_encode($PersonObj->deleteAllPeople());
-$ReturnDataObj = json_encode($PersonObj->addMockData($PersonObj));
+$ReturnDataObj = json_encode($PersonObj->addMockData());
 
 $CurrentTimeFlt = microtime(true);
 $TimeStampInt = time();
