@@ -1,45 +1,44 @@
 <?php
-    // LOOP CODE:
-    function getFibonacciSequence($LastNumberInt) {
-        $OutputArr = [0,1]; //TODO ADD IN
-        $N1Int = 1;
-        $N2Int = 0;
-        $CurrentValueInt = 0;
-        while ($CurrentValueInt <= $LastNumberInt) {
-            $OutputArr[] = $N2Int;
-            $TempInt = $N1Int + $N2Int;
-            $N1Int = $N2Int;
-            $N2Int = $TempInt;
-            $CurrentValueInt = $N2Int;
-        }
-        return $OutputArr;
+function getFibonacciSequence($NumberEnteredInt) {
+    if($NumberEnteredInt<0){
+        return [];
     }
+    $ResultArr = [0,1];
+    $CurrentNumber = 1;
+    while(true){
+        $LengthInt = count($ResultArr);
+        $CurrentNumber = ($ResultArr[$LengthInt - 1] + $ResultArr[$LengthInt- 2]);
+        if($CurrentNumber <= $NumberEnteredInt) {
+            $ResultArr[] = $CurrentNumber;
+        }else{
+            break;
+        }
+    }
+    return $ResultArr;
+}
+
 
 // TODO: RECURSIVE CODE MAKE TOTALLY RECURSIVE
-    function getFibonacciByIndexRecursive($NumberInt) {
-        if ($NumberInt == 0) {
-            return 0;
-        }
-        if ($NumberInt == 1) {
-            return 1;
+
+
+    function getFibonacciByIndexRecursive($LastNumberInt) {
+        if ($LastNumberInt <= 0) {
+            return [];
+        } else if ($LastNumberInt == 1) {
+            return [0];
         } else {
-            return getFibonacciByIndexRecursive($NumberInt - 1) + getFibonacciByIndexRecursive($NumberInt - 2);
+            $ResultArr = getFibonacciSequence($LastNumberInt - 1);
+            $length = count($ResultArr);
+            $nextNumber = $ResultArr[$length - 1] + $ResultArr[$length - 2];
+            if ($nextNumber <= $LastNumberInt) {
+                $ResultArr[] = $nextNumber;
+            }
+            return $ResultArr;
         }
     }
 
-    function getFibonacciSequenceRecursive($LastNumberInt) {
-        $CurrentNumberInt = 0;
-        $ResultInt = 0;
-        $OutputArr = [];
-        while ($ResultInt < $LastNumberInt) {
-            $ResultInt = getFibonacciByIndexRecursive($CurrentNumberInt);
-            $OutputArr[] = $ResultInt;
-            $CurrentNumberInt++;
-        }
-        return $OutputArr;
-    }
 
-    echo(json_encode(getFibonacciSequenceRecursive(69)));
-    echo(json_encode(getFibonacciSequence(69)));
+    //echo(json_encode(getFibonacciByIndexRecursive(34)));
+    echo(json_encode(getFibonacciSequence(-5)));
 
 ?>
