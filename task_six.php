@@ -1,117 +1,75 @@
 <?php
-class LoggingDto
-{
-    public $IdInt;
-    public $NameStr;
-    public $DescriptionStr;
-    public $CreatedStr;
-    public $QueryTimeInt;
 
-    function __construct($NameStr, $DescriptionStr, $CreatedStr, $QueryTimeInt)
-    {
-        $this->NameStr = $NameStr;
-        $this->DescriptionStr = $DescriptionStr;
-        $this->CreatedStr = $CreatedStr;
-        $this->QueryTimeInt = $QueryTimeInt;
-    }
-
-}
-class PersonDto
-{
-    public $IdInt;
-    public $FirstNameStr;
-    public $SurnameStr;
-    public $DateOfBirthStr;
-    public $EmailAddressStr;
-    public $AgeInt;
-
-    function __construct($FirstNameStr, $SurnameStr, $DateOfBirthDate, $EmailAddressStr, $AgeInt, $IdInt)
-    {
-        $this->FirstNameStr = $FirstNameStr;
-        $this->SurnameStr = $SurnameStr;
-        $this->DateOfBirthStr = $DateOfBirthDate;
-        $this->EmailAddressStr = $EmailAddressStr;
-        $this->AgeInt = $AgeInt;
-        $this->IdInt = $IdInt;
-    }
-
-}
-class Logging
-{
+class BaseClass{
     private $ConnectionObj = null;
-    function __construct($ConnectionObj)
-    {
+    function __construct($ConnectionObj) {
         $this->ConnectionObj = $ConnectionObj;
     }
 
-    function createLog($Log)
-    {
-        $TheQueryStr = "
-            INSERT INTO Logging (Name, Description, Created, QueryTime) 
-            VALUES (
-            '$Log->NameStr',
-            '$Log->DescriptionStr', 
-            '$Log->CreatedStr', 
-            '$Log->QueryTimeInt')";
-
-        $QueryWasSuccessfulBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
-
-        if (!$QueryWasSuccessfulBool) {
-            echo "Failed inserting ".$this->ConnectionObj->error;
+    public function insertRecords($TableNameStr, $KeyArr, $ValueArr) {
+        $KeyStr = implode(', ', $KeyArr);
+        $QueryStr = "INSERT INTO $TableNameStr ($KeyStr) VALUES ";
+        for ($RowIteratorInt = 0; $RowIteratorInt < count($ValueArr); $RowIteratorInt++) {
+            $Row = $ValueArr[$RowIteratorInt];
+            $QueryStr .= "(";
+            for ($CellIteratorInt = 0; $CellIteratorInt < count($Row); $CellIteratorInt++) {
+                $QueryStr .= "'$Row[$CellIteratorInt]'";
+                if ($CellIteratorInt != count($Row)-1) {
+                    $QueryStr .= ", ";
+                }
+            }
+            if ($RowIteratorInt != count($ValueArr)-1) {
+                $QueryStr .= "), ";
+            } else {
+                $QueryStr .= ")";
+            }
         }
-        return $TheQueryStr;
-    }
 
-
-}
-class Person
-{
-    private $ConnectionObj = null;
-
-    function __construct($ConnectionObj)
-    {
-        $this->ConnectionObj = $ConnectionObj;
-    }
-
-    function addMockData($PersonObjObj)
-    {
-        $ScaffoldedPersonsArr = [
-            new PersonDto('John', 'Smith', '1990-05-15', 'john.smith@example.com', 33, null),
-            new PersonDto('Emma', 'Johnson', '1982-09-10', 'emma.johnson@example.com', 41, null),
-            new PersonDto('Michael', 'Brown', '1978-07-23', 'michael.brown@example.com', 45, null),
-            new PersonDto('Sophia', 'Miller', '1995-03-19', 'sophia.miller@example.com', 28, null),
-            new PersonDto('Daniel', 'Wilson', '1988-11-08', 'daniel.wilson@example.com', 33, null),
-            new PersonDto('Olivia', 'Davis', '1992-02-14', 'olivia.davis@example.com', 31, null),
-            new PersonDto('James', 'Anderson', '1984-06-30', 'james.anderson@example.com', 39, null),
-            new PersonDto('Isabella', 'Taylor', '1997-08-25', 'isabella.taylor@example.com', 25, null),
-            new PersonDto('William', 'Thomas', '1991-12-03', 'william.thomas@example.com', 31, null),
-            new PersonDto('Ava', 'Harris', '1987-04-12', 'ava.harris@example.com', 36, null)
-        ];
-        foreach ($ScaffoldedPersonsArr as $ScaffoldedPersonObj) {
-            $PersonObjObj->createPerson($ScaffoldedPersonObj);
-        }
-        return true;
-    }
-
-    function createPerson($PersonObj)
-    {
-        $TheQueryStr = "INSERT INTO Person 
-            (FirstName, Surname, DateOfBirth, EmailAddress, Age) 
-            VALUES (
-            '$PersonObj->FirstNameStr',
-            '$PersonObj->SurnameStr', 
-            '$PersonObj->DateOfBirthStr', 
-            '$PersonObj->EmailAddressStr', 
-            '$PersonObj->AgeInt')";
-
-        $QueryWasSuccessfulBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
-
-        if (!$QueryWasSuccessfulBool) {
+        $QueryStr = rtrim($QueryStr,",");
+        $QuerySuccessful = mysqli_query($this->ConnectionObj, $QueryStr);
+        if (!$QuerySuccessful) {
             echo "Failed inserting ".$this->ConnectionObj->error;
             return;
         }
-        return $QueryWasSuccessfulBool;
+        return $QuerySuccessful;
+    }
+    public function shapeDataForInsert($DynamicObj){
+        $FirstElement = reset($DynamicObj);
+        $KeyArr = [];
+        foreach ($FirstElement as $KeyStr => $ValueStr) {
+            $KeyArr[] = $KeyStr;
+        }
+        $ValueArr = [];
+        foreach ($DynamicObj as $SubDynamicObj) {
+            $LocalValueArr = [];
+            foreach ($SubDynamicObj as $PropertyKeyStr => $PropertyValueStr) {
+                $LocalValueArr[] = $PropertyValueStr;
+            }
+            $ValueArr[] = $LocalValueArr;
+        }
+        return (object)["KeyArr"=>$KeyArr, "ValueArr"=>$ValueArr];
+    }
 
+}
+
+class Logging extends BaseClass {
+    function __construct($ConnectionObj) {
+        $this->ConnectionObj = $ConnectionObj;
+        parent::__construct($ConnectionObj);
+    }
+
+    function createLog($LogArr) {
+        $ShapedDataObj = $this->shapeDataForInsert($LogArr);
+        $this->insertRecords("Logging", $ShapedDataObj->KeyArr, $ShapedDataObj->ValueArr);
+    }
+}
+
+class Person extends BaseClass {
+    private $ConnectionObj = null;
+
+    function __construct($ConnectionObj) {
+        $this->ConnectionObj = $ConnectionObj;
+        parent::__construct($ConnectionObj);
     }
 
     function loadPerson($IdInt)
@@ -160,10 +118,69 @@ class Person
         return $QueryResultBool;
     }
 
-    function loadAllPeople()
-    {
-        $TheQueryStr = "SELECT * FROM Person";
-        $QueryResultObj = $this->ConnectionObj->query($TheQueryStr);
+    function addMockData() {
+        $ScaffoldedPersonsArr = [
+            (object)['FirstName' => 'John', 'Surname' => 'Smith', 'DateOfBirth' => '1990-05-15',
+                'EmailAddress' => 'john.smith@example.com', 'Age' => 33
+            ],
+            (object)['FirstName' => 'Emma', 'Surname' => 'Johnson', 'DateOfBirth' => '1982-09-10',
+                'EmailAddress' => 'emma.johnson@example.com', 'Age' => 41
+            ],
+            (object)['FirstName' => 'Michael', 'Surname' => 'Brown', 'DateOfBirth' => '1978-07-23',
+                'EmailAddress' => 'michael.brown@example.com', 'Age' => 45
+            ],
+            (object)['FirstName' => 'Sophia', 'Surname' => 'Miller', 'DateOfBirth' => '1995-03-19',
+                'EmailAddress' => 'sophia.miller@example.com', 'Age' => 28
+            ],
+            (object)['FirstName' => 'Daniel', 'Surname' => 'Wilson', 'DateOfBirth' => '1988-11-08',
+                'EmailAddress' => 'daniel.wilson@example.com', 'Age' => 33
+            ],
+            (object)['FirstName' => 'Olivia', 'Surname' => 'Davis', 'DateOfBirth' => '1992-02-14',
+                'EmailAddress' => 'olivia.davis@example.com', 'Age' => 31
+            ],
+            (object)['FirstName' => 'James', 'Surname' => 'Anderson', 'DateOfBirth' => '1984-06-30',
+                'EmailAddress' => 'james.anderson@example.com', 'Age' => 39
+            ],
+            (object)['FirstName' => 'Isabella', 'Surname' => 'Taylor', 'DateOfBirth' => '1997-08-25',
+                'EmailAddress' => 'isabella.taylor@example.com', 'Age' => 25
+            ],
+            (object)['FirstName' => 'William', 'Surname' => 'Thomas', 'DateOfBirth' => '1991-12-03',
+                'EmailAddress' => 'william.thomas@example.com', 'Age' => 31
+            ],
+            (object)['FirstName' => 'Ava', 'Surname' => 'Harris', 'DateOfBirth' => '1987-04-12',
+                'EmailAddress' => 'ava.harris@example.com', 'Age' => 36
+            ]
+        ];
+
+        $this->createPeople($ScaffoldedPersonsArr);
+        return true;
+    }
+
+    //TODO change to createPeople($PersonArr), and
+    //TODO Remove word "THE"
+    //TODO TASK 2,5,6
+    //TODO change PersonDto()
+    //$PersonObj = (object)[
+    //'FirstName' => 'Brett',
+    //]
+
+    //TODO createPeople([$PersonObj]){}
+    //  insertRows("Person", $PersonArr) //
+    //TODO: col names try build wit this for propnames
+    //        foreach ($obj as $key => $value) {
+    //            echo "$key => $value\n";
+    //        }
+
+    function createPeople($PeopleArr) {
+        //echo(json_encode($PeopleArr));
+        $ShapedDataObj = $this->shapeDataForInsert($PeopleArr);
+        $this->insertRecords("Person", $ShapedDataObj->KeyArr, $ShapedDataObj->ValueArr);
+    }
+
+
+    function loadAllPeople() {
+        $QueryStr = "SELECT * FROM Person;";
+        $QueryResultObj = $this->ConnectionObj->query($QueryStr);
         $QueryReturnResultArr = [];
 
         if ($QueryResultObj->num_rows > 0) {
@@ -174,10 +191,9 @@ class Person
         return $QueryReturnResultArr;
     }
 
-    function deleteAllPeople()
-    {
-        $TheQueryStr = "DELETE FROM Person";
-        $QueryResultBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
+    function deleteAllPeople() {
+        $QueryStr = "DELETE FROM Person";
+        $QueryResultBool = mysqli_query($this->ConnectionObj, $QueryStr);
 
         if (!$QueryResultBool) {
             echo "Failed inserting ".$this->ConnectionObj->error;
@@ -197,7 +213,7 @@ if ($ConnectionObj->connect_error) {
     die("Connection failed: ".$ConnectionObj->connect_error);
 }
 
-$LoggingObj = new Logging($ConnectionObj);
+$Logging = new Logging($ConnectionObj);
 $PersonObj = new Person($ConnectionObj);
 $ReturnDataObj = "";
 
@@ -206,10 +222,10 @@ if ($_POST && !array_key_exists("_method", $_POST) && array_key_exists("Type", $
         $CurrentTimeFlt = microtime(true);
         $TimeStampInt = time();
         $CurrentDateStr = gmdate("Y-m-d H:i:s", $TimeStampInt);
-        $LoggingDtoObj = new LoggingDto("loadAllPeople()", "loadAllPeople() DB Query", $CurrentDateStr, 0);
         $ReturnDataObj = json_encode($PersonObj->loadAllPeople());
-        $LoggingDtoObj->QueryTimeInt = round(microtime(true) - $CurrentTimeFlt, 3) * 1000;
-        $LoggingObj->createLog($LoggingDtoObj);
+        $QueryTime = round(microtime(true) - $CurrentTimeFlt, 3) * 1000;
+        $LoggingDtoObj = [(object)['Name' => 'loadAllPeople()', 'Description'=>'loadAllPeople() DB Query', 'Created' => $CurrentDateStr, "QueryTime"=>$QueryTime]];
+        $Logging->createLog($LoggingDtoObj);        
     } else if ($_POST["Type"] == "addMockData") {
         $ReturnDataObj = json_encode($PersonObj->addMockData($PersonObj));
         echo 'mock data added';
@@ -242,4 +258,7 @@ if ($_POST && !array_key_exists("_method", $_POST) && array_key_exists("Type", $
         echo $ReturnDataObj;
     }
 }
+
+echo $ReturnDataObj;
+
 ?>
