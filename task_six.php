@@ -1,68 +1,62 @@
 <?php
 
-class LoggingDto {
-    public $IdInt;
-    public $NameStr;
-    public $DescriptionStr;
-    public $CreatedStr;
-    public $QueryTimeInt;
-
-    function __construct($NameStr, $DescriptionStr, $CreatedStr, $QueryTimeInt) {
-        $this->NameStr = $NameStr;
-        $this->DescriptionStr = $DescriptionStr;
-        $this->CreatedStr = $CreatedStr;
-        $this->QueryTimeInt = $QueryTimeInt;
-    }
-
-}
-
-class PersonDto {
-    public $IdInt;
-    public $FirstNameStr;
-    public $SurnameStr;
-    public $DateOfBirthStr;
-    public $EmailAddressStr;
-    public $AgeInt;
-
-    function __construct($FirstNameStr, $SurnameStr, $DateOfBirthDate, $EmailAddressStr, $AgeInt, $IdInt) {
-        $this->FirstNameStr = $FirstNameStr;
-        $this->SurnameStr = $SurnameStr;
-        $this->DateOfBirthStr = $DateOfBirthDate;
-        $this->EmailAddressStr = $EmailAddressStr;
-        $this->AgeInt = $AgeInt;
-        $this->IdInt = $IdInt;
-    }
-
-}
-
-class Logging {
+class BaseClass{
     private $ConnectionObj = null;
-
     function __construct($ConnectionObj) {
         $this->ConnectionObj = $ConnectionObj;
     }
 
-    function createLog($Log) {
-        $QueryStr = "
-            INSERT INTO Logging (Name, Description, Created, QueryTime) 
-            VALUES (
-            '$Log->NameStr',
-            '$Log->DescriptionStr', 
-            '$Log->CreatedStr', 
-            '$Log->QueryTimeInt')";
-
-        if (!mysqli_query($this->ConnectionObj, $QueryStr)) {
-            echo "Failed inserting ".$this->ConnectionObj->error;
+    public function insertRecords($TableNameStr, $KeyArr, $ValueArr) {
+        $KeyStr = implode(', ', $KeyArr);
+        $QueryStr = "INSERT INTO $TableNameStr ($KeyStr) VALUES ";
+        for ($RowIteratorInt = 0; $RowIteratorInt < count($ValueArr); $RowIteratorInt++) {
+            $Row = $ValueArr[$RowIteratorInt];
+            $QueryStr .= "(";
+            for ($CellIteratorInt = 0; $CellIteratorInt < count($Row); $CellIteratorInt++) {
+                $QueryStr .= "'$Row[$CellIteratorInt]'";
+                if ($CellIteratorInt != count($Row)-1) {
+                    $QueryStr .= ", ";
+                }
+            }
+            if ($RowIteratorInt != count($ValueArr)-1) {
+                $QueryStr .= "), ";
+            } else {
+                $QueryStr .= ")";
+            }
         }
-        return $QueryStr;
-    }
-}
 
-class Person {
+        $QueryStr = rtrim($QueryStr,",");
+        $QuerySuccessful = mysqli_query($this->ConnectionObj, $QueryStr);
+        if (!$QuerySuccessful) {
+            echo "Failed inserting ".$this->ConnectionObj->error;
+            return;
+        }
+        return $QuerySuccessful;
+    }
+    public function shapeDataForInsert($DynamicObj){
+        $FirstElement = reset($DynamicObj);
+        $KeyArr = [];
+        foreach ($FirstElement as $KeyStr => $ValueStr) {
+            $KeyArr[] = $KeyStr;
+        }
+        $ValueArr = [];
+        foreach ($DynamicObj as $SubDynamicObj) {
+            $LocalValueArr = [];
+            foreach ($SubDynamicObj as $PropertyKeyStr => $PropertyValueStr) {
+                $LocalValueArr[] = $PropertyValueStr;
+            }
+            $ValueArr[] = $LocalValueArr;
+        }
+        return (object)["KeyArr"=>$KeyArr, "ValueArr"=>$ValueArr];
+    }
+
+}
+class Person extends BaseClass {
     private $ConnectionObj = null;
 
     function __construct($ConnectionObj) {
         $this->ConnectionObj = $ConnectionObj;
+        parent::__construct($ConnectionObj);
     }
 
     function addMockData() {
@@ -120,49 +114,10 @@ class Person {
 
     function createPeople($PeopleArr) {
         //echo(json_encode($PeopleArr));
-        $FirstElement = reset($PeopleArr);
-        $KeyArr = [];
-        foreach ($FirstElement as $KeyStr => $ValueStr) {
-            $KeyArr[] = $KeyStr;
-        }
-        $ValueArr = [];
-        foreach ($PeopleArr as $PersonObj) {
-            $PersonValueArr = [];
-            foreach ($PersonObj as $PersonPropertyKeyStr => $PersonPropertyValueStr) {
-                $PersonValueArr[] = $PersonPropertyValueStr;
-            }
-            $ValueArr[] = $PersonValueArr;
-        }
-        $this->insertRecords("Person", $KeyArr, $ValueArr);
+        $ShapedDataObj = $this->shapeDataForInsert($PeopleArr);
+        $this->insertRecords("Person", $ShapedDataObj->KeyArr, $ShapedDataObj->ValueArr);
     }
 
-    function insertRecords($TableNameStr, $KeyArr, $ValueArr) {
-        $KeyStr = implode(', ', $KeyArr);
-        $QueryStr = "INSERT INTO $TableNameStr ($KeyStr) VALUES ";
-        for ($RowIteratorInt = 0; $RowIteratorInt < count($ValueArr); $RowIteratorInt++) {
-            $Row = $ValueArr[$RowIteratorInt];
-            $QueryStr .= "(";
-            for ($CellIteratorInt = 0; $CellIteratorInt < count($Row); $CellIteratorInt++) {
-                $QueryStr .= "'$Row[$CellIteratorInt]'";
-                if ($CellIteratorInt != count($Row)-1) {
-                    $QueryStr .= ", ";
-                }
-            }
-            if ($RowIteratorInt != count($ValueArr)-1) {
-                $QueryStr .= "), ";
-            } else {
-                $QueryStr .= ")";
-            }
-        }
-
-        $QueryStr = rtrim($QueryStr,",");
-        $QuerySuccessful = mysqli_query($this->ConnectionObj, $QueryStr);
-        if (!$QuerySuccessful) {
-            echo "Failed inserting ".$this->ConnectionObj->error;
-            return;
-        }
-        return $QuerySuccessful;
-    }
 
     function loadPerson($IdInt) {
     }
@@ -198,6 +153,17 @@ class Person {
     }
 }
 
+class Logging extends BaseClass {
+    function __construct($ConnectionObj) {
+        $this->ConnectionObj = $ConnectionObj;
+        parent::__construct($ConnectionObj);
+    }
+
+    function createLog($LogArr) {
+        $ShapedDataObj = $this->shapeDataForInsert($LogArr);
+        $this->insertRecords("Logging", $ShapedDataObj->KeyArr, $ShapedDataObj->ValueArr);
+    }
+}
 //Connection
 $ServerNameStr = "127.0.0.1";
 $UsernameStr = "user";
@@ -208,7 +174,7 @@ if ($ConnectionObj->connect_error) {
     die("Connection failed: ".$ConnectionObj->connect_error);
 }
 
-$LoggingObj = new Logging($ConnectionObj);
+$Logging = new Logging($ConnectionObj);
 $PersonObj = new Person($ConnectionObj);
 $ReturnDataObj = "";
 
@@ -218,10 +184,10 @@ $ReturnDataObj = json_encode($PersonObj->addMockData());
 $CurrentTimeFlt = microtime(true);
 $TimeStampInt = time();
 $CurrentDateStr = gmdate("Y-m-d H:i:s", $TimeStampInt);
-$LoggingDtoObj = new LoggingDto("loadAllPeople()", "loadAllPeople() DB Query", $CurrentDateStr, 0);
 $ReturnDataObj = json_encode($PersonObj->loadAllPeople());
-$LoggingDtoObj->QueryTimeInt = round(microtime(true) - $CurrentTimeFlt, 3) * 1000;
-$LoggingObj->createLog($LoggingDtoObj);
+$QueryTime = round(microtime(true) - $CurrentTimeFlt, 3) * 1000;
+$LoggingDtoObj = [(object)['Name' => 'loadAllPeople()', 'Description'=>'loadAllPeople() DB Query', 'Created' => $CurrentDateStr, "QueryTime"=>$QueryTime]];
+$Logging->createLog($LoggingDtoObj);
 
 echo $ReturnDataObj;
 
