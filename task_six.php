@@ -1,5 +1,20 @@
 <?php
 
+//TODO TASK 2,5,6
+//DONE change to createPeople($PersonArr), and
+//DONE Remove word "THE"
+//DONE change PersonDto()
+//$PersonObj = (object)[
+//'FirstName' => 'Brett',
+//]
+
+//DONE createPeople([$PersonObj]){}
+//  insertRows("Person", $PersonArr) //
+//DONE: col names try build wit this for propnames
+//        foreach ($obj as $key => $value) {
+//            echo "$key => $value\n";
+//        }
+
 class BaseClass{
     private $ConnectionObj = null;
     function __construct($ConnectionObj) {
@@ -74,9 +89,9 @@ class Person extends BaseClass {
 
     function loadPerson($IdInt)
     {
-        $TheQueryStr = "SELECT Id, FirstName, Surname, DateOfBirth, EmailAddress, Age 
+        $QueryStr = "SELECT Id, FirstName, Surname, DateOfBirth, EmailAddress, Age 
                         FROM Person where id=$IdInt";
-        $PersonQueryResultObj = $this->ConnectionObj->query($TheQueryStr);
+        $PersonQueryResultObj = $this->ConnectionObj->query($QueryStr);
         $PersonArr = [];
         if ($PersonQueryResultObj->num_rows > 0) {
             while ($PersonObj = mysqli_fetch_array($PersonQueryResultObj, MYSQLI_ASSOC)) {
@@ -89,7 +104,7 @@ class Person extends BaseClass {
     function savePerson($PersonObj)
     {
         // $strDate = $PersonObj->dateOfBirth->format('Y-m-d H:i:s');
-        $TheQueryStr = "UPDATE Person SET 
+        $QueryStr = "UPDATE Person SET 
                         FirstName = '$PersonObj->FirstNameStr',
                         Surname = '$PersonObj->SurnameStr', 
                         DateOfBirth = '$PersonObj->DateOfBirthStr', 
@@ -97,7 +112,7 @@ class Person extends BaseClass {
                         Age = '$PersonObj->AgeInt'
                       WHERE Id = $PersonObj->IdInt";
 
-        $QueryResultBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
+        $QueryResultBool = mysqli_query($this->ConnectionObj, $QueryStr);
 
         if (!$QueryResultBool) {
             echo "Failed inserting ".$this->ConnectionObj->error;
@@ -108,8 +123,8 @@ class Person extends BaseClass {
 
     function deletePerson($id)
     {
-        $TheQueryStr = "DELETE FROM Person WHERE Id = $id";
-        $QueryResultBool = mysqli_query($this->ConnectionObj, $TheQueryStr);
+        $QueryStr = "DELETE FROM Person WHERE Id = $id";
+        $QueryResultBool = mysqli_query($this->ConnectionObj, $QueryStr);
 
         if (!$QueryResultBool) {
             echo "Failed inserting ".$this->ConnectionObj->error;
@@ -155,21 +170,6 @@ class Person extends BaseClass {
         $this->createPeople($ScaffoldedPersonsArr);
         return true;
     }
-
-    //TODO change to createPeople($PersonArr), and
-    //TODO Remove word "THE"
-    //TODO TASK 2,5,6
-    //TODO change PersonDto()
-    //$PersonObj = (object)[
-    //'FirstName' => 'Brett',
-    //]
-
-    //TODO createPeople([$PersonObj]){}
-    //  insertRows("Person", $PersonArr) //
-    //TODO: col names try build wit this for propnames
-    //        foreach ($obj as $key => $value) {
-    //            echo "$key => $value\n";
-    //        }
 
     function createPeople($PeopleArr) {
         //echo(json_encode($PeopleArr));
@@ -227,27 +227,19 @@ if ($_POST && !array_key_exists("_method", $_POST) && array_key_exists("Type", $
         $LoggingDtoObj = [(object)['Name' => 'loadAllPeople()', 'Description'=>'loadAllPeople() DB Query', 'Created' => $CurrentDateStr, "QueryTime"=>$QueryTime]];
         $Logging->createLog($LoggingDtoObj);        
     } else if ($_POST["Type"] == "addMockData") {
-        $ReturnDataObj = json_encode($PersonObj->addMockData($PersonObj));
-        echo 'mock data added';
+        $ReturnDataObj = json_encode($PersonObj->addMockData());
     } else if ($_POST["Type"] == "createPerson") {
-        $PersonDtoObj = new PersonDto($_POST["FirstName"], $_POST["Surname"], $_POST["DateOfBirth"], $_POST["EmailAddress"], $_POST["Age"], 0);
-        if (!$PersonDtoObj->FirstNameStr == null && !$PersonDtoObj->SurnameStr) {
-            echo "you need either a name or surname to create a person";
-            return;
-        } else {
-            $ReturnDataObj = json_encode($PersonObj->createPerson($PersonDtoObj));
-        }
+        $PersonDtoArr = [(object)['FirstName' => $_POST["FirstName"], 'Surname' => $_POST["Surname"], 'DateOfBirth' => $_POST["DateOfBirth"],
+            'EmailAddress' => $_POST["EmailAddress"], 'Age' => $_POST["Age"]]];
+            $ReturnDataObj = json_encode($PersonObj->createPeople($PersonDtoArr));
     }
-    echo $ReturnDataObj;
 } else if ($_GET && array_key_exists("Id", $_GET)) {
     $ReturnDataObj = json_encode($PersonObj->loadPerson($_GET["Id"]));
-    echo $ReturnDataObj;
 } else if (array_key_exists('_method', $_POST)) {
     if ($_POST['_method'] === 'PUT') {
         parse_str(file_get_contents("php://input"), $http_vars);
-        $PersonDtoObj = new PersonDto($http_vars["FirstName"], $http_vars["Surname"], $http_vars["DateOfBirth"], $http_vars["EmailAddress"], $http_vars["Age"], $http_vars["Id"]);
-        $ReturnDataObj = json_encode($PersonObj->savePerson($PersonDtoObj));
-        echo $ReturnDataObj;
+        $PersonDtoArr = new PersonDto($http_vars["FirstName"], $http_vars["Surname"], $http_vars["DateOfBirth"], $http_vars["EmailAddress"], $http_vars["Age"], $http_vars["Id"]);
+        $ReturnDataObj = json_encode($PersonObj->savePerson($PersonDtoArr));
     } else if ($_POST['_method'] === 'DELETE') {
         parse_str(file_get_contents("php://input"), $http_vars);
         if (array_key_exists("Id", $http_vars)) {
@@ -255,7 +247,6 @@ if ($_POST && !array_key_exists("_method", $_POST) && array_key_exists("Type", $
         } else {
             $ReturnDataObj = json_encode($PersonObj->deleteAllPeople());
         }
-        echo $ReturnDataObj;
     }
 }
 
