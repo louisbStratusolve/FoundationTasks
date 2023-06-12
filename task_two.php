@@ -1,6 +1,7 @@
 <?php
-if ($_POST && $_POST["FibonacciSequenceNumber"]) {
 
+
+if ($_POST && $_POST["FibonacciSequenceNumber"]) {
     function isPerfectSquare($NumberInt)
     {
         $s = (int)(sqrt($NumberInt));
@@ -12,55 +13,51 @@ if ($_POST && $_POST["FibonacciSequenceNumber"]) {
         return isPerfectSquare(5 * $NumberInt * $NumberInt + 4) ||
             isPerfectSquare(5 * $NumberInt * $NumberInt - 4);
     }
-
-    // LOOP CODE:
-    function getFibonacciSequence($LastNumberInt)
+    function getFibonacciSequence($NumberEnteredInt)
     {
-        $OutputArr = [];
-        $N1Int = 1;
-        $N2Int = 0;
-        $CurrentValueInt = 0;
-        while ($CurrentValueInt <= $LastNumberInt) {
-            $OutputArr[] = $N2Int;
-            $TempInt = $N1Int + $N2Int;
-            $N1Int = $N2Int;
-            $N2Int = $TempInt;
-            $CurrentValueInt = $N2Int;
+        if ($NumberEnteredInt < 0) {
+            return [];
         }
-        return $OutputArr;
+        $ResultArr = [0, 1];
+        $CurrentNumber = 1;
+        while (true) {
+            $LengthInt = count($ResultArr);
+            $CurrentNumber = ($ResultArr[$LengthInt - 1] + $ResultArr[$LengthInt - 2]);
+            if ($CurrentNumber <= $NumberEnteredInt) {
+                $ResultArr[] = $CurrentNumber;
+            } else {
+                break;
+            }
+        }
+        return $ResultArr;
     }
 
-// RECURSIVE CODE
-    function getFibonacciByIndexRecursive($NumberInt)
+    function getFibonacciSequenceRecursive($NumberEnteredInt)
     {
-        if ($NumberInt == 0) {
-            return 0;
+        if ($NumberEnteredInt <= 0) {
+            echo "[]";
         }
-        if ($NumberInt == 1) {
-            return 1;
+        if ($NumberEnteredInt == 1) {
+            return [0];
         } else {
-            return getFibonacciByIndexRecursive($NumberInt - 1) + getFibonacciByIndexRecursive($NumberInt - 2);
+            $ResultArr = getFibonacciSequence($NumberEnteredInt - 1);
+            $length = count($ResultArr);
+            $nextNumber = $ResultArr[$length - 1] + $ResultArr[$length - 2];
+            if ($nextNumber <= $NumberEnteredInt) {
+                $ResultArr[] = $nextNumber;
+            }
+            return $ResultArr;
         }
     }
 
-    function getFibonacciSequenceRecursive($LastNumberInt)
-    {
-        $CurrentNumberInt = 0;
-        $ResultInt = 0;
-        $OutputArr = [];
-        while ($ResultInt < $LastNumberInt) {
-            $ResultInt = getFibonacciByIndexRecursive($CurrentNumberInt);
-            $OutputArr[] = $ResultInt;
-            $CurrentNumberInt++;
-        }
-        return $OutputArr;
-    }
+
+    // TODO: RECURSIVE CODE MAKE TOTALLY RECURSIVE
 
     if (isFibonacci($_POST["FibonacciSequenceNumber"])) {
-        echo(json_encode(getFibonacciSequenceRecursive($_POST["FibonacciSequenceNumber"])));
-        //echo(json_encode(getFibonacciSequence($_POST["FibonacciSequenceNumber"])));
+        echo (json_encode(getFibonacciSequenceRecursive($_POST["FibonacciSequenceNumber"])));
+        echo "\n";
+        echo (json_encode(getFibonacciSequence($_POST["FibonacciSequenceNumber"])));
     } else {
-        echo $_POST["FibonacciSequenceNumber"]." is not in the Fibonacci sequence";
+        echo $_POST["FibonacciSequenceNumber"] . " is not in the Fibonacci sequence";
     }
 }
-?>
