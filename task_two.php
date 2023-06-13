@@ -35,7 +35,7 @@ if ($_POST && $_POST["FibonacciSequenceNumber"]) {
     function getFibonacciSequenceRecursive($NumberEnteredInt)
     {
         if ($NumberEnteredInt <= 0) {
-            echo "[]";
+           return [];
         }
         if ($NumberEnteredInt == 1) {
             return [0];
