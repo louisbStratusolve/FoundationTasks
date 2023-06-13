@@ -1,7 +1,7 @@
 <?php
 
 function addAllNumbersRecursive($NumbersArr, $RemoveFirstBool) {
-    if (count($NumbersArr) <= 1) {
+    if (count($NumbersArr) == 1) {
         return end($NumbersArr);
     }
     $TotalSumArrayCountInt = 0;
@@ -41,6 +41,7 @@ function addAllNumbers($NumbersArr, $RemoveFirstBool) {
 
 $NumbersArr = [1, 1, 1, 1, 5]; //5+4+3+2+1=15
 echo addAllNumbers($NumbersArr, true);
+echo "\n";
 echo addAllNumbersRecursive($NumbersArr, true);
 
 ?>
