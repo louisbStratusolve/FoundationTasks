@@ -1,6 +1,6 @@
 <?php
 
-//TODO TASK 2,5,6
+//DONE TASK 2,5,6
 //DONE change to createPeople($PersonArr), and
 //DONE Remove word "THE"
 //DONE change PersonDto()
