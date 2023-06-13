@@ -58,7 +58,7 @@
                 $('#createSurnameInput').addClass("border").addClass("border-danger");
                 isValid = false;
             }
-            if (!$('#createDateOfBirthInput').val()) {
+            if (!$('#createDateOfBirthInput').val() || (new Date($('#createDateOfBirthInput').val()) > new Date())) {
                 $('#createDateOfBirthInput').addClass("border").addClass("border-danger");
                 isValid = false;
             }
@@ -84,7 +84,7 @@
                 $('#editSurnameInput').addClass("border").addClass("border-danger");
                 isValid = false;
             }
-            if (!$('#editDateOfBirthInput').val()) {
+            if (!$('#editDateOfBirthInput').val() || (new Date($('#editDateOfBirthInput').val()) > new Date()) ) {
                 $('#editDateOfBirthInput').addClass("border").addClass("border-danger");
                 isValid = false;
             }
