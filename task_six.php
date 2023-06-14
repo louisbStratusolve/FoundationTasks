@@ -30,14 +30,6 @@ class Timer {
         return round(microtime(true) - $TimeFlt, 3);
     }
 }
-
-//class DbTimer extends Timer {
-//    public function readWithName($NameStr = '') {
-//        echo $NameStr;
-//        echo $this->read();
-//    }
-//}
-
 class BaseClass {
     private $ConnectionObj = null;
 
