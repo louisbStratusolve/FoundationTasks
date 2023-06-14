@@ -1,81 +1,96 @@
 <?php
 
-//DONE TASK 2,5,6
-//DONE change to createPeople($PersonArr), and
-//DONE Remove word "THE"
-//DONE change PersonDto()
-//$PersonObj = (object)[
-//'FirstName' => 'Brett',
-//]
+class Timer {
+    protected $TimeFlt;
+    protected $DeltaFlt;
 
-//DONE createPeople([$PersonObj]){}
-//  insertRows("Person", $PersonArr) //
-//DONE: col names try build wit this for propnames
-//        foreach ($obj as $key => $value) {
-//            echo "$key => $value\n";
-//        }
+    function __construct() {
+        $this->TimeFlt = microtime(true);
+        $this->DeltaFlt = microtime(true);
+    }
 
-class BaseClass{
+    public function reset() {
+        $this->TimeFlt = 0;
+        $this->DeltaFlt = 0;
+    }
+
+    public function read() {
+        $TotalFlt = $this->evaluate($this->TimeFlt);
+        $this->reset();
+        return $TotalFlt;
+    }
+
+    public function delta($NameStr = '') {
+        $ReturnFlt = $this->evaluate($this->DeltaFlt);
+        $this->DeltaFlt = microtime(true);
+        echo $NameStr.': '.$ReturnFlt.'s<br>';
+    }
+
+    protected function evaluate($TimeFlt) {
+        return round(microtime(true) - $TimeFlt, 3);
+    }
+}
+
+//class DbTimer extends Timer {
+//    public function readWithName($NameStr = '') {
+//        echo $NameStr;
+//        echo $this->read();
+//    }
+//}
+
+class BaseClass {
     private $ConnectionObj = null;
+
     function __construct($ConnectionObj) {
         $this->ConnectionObj = $ConnectionObj;
     }
 
-    public function insertRecords($TableNameStr, $KeyArr, $ValueArr) {
-        $KeyStr = implode(', ', $KeyArr);
-        $QueryStr = "INSERT INTO $TableNameStr ($KeyStr) VALUES ";
-        for ($RowIteratorInt = 0; $RowIteratorInt < count($ValueArr); $RowIteratorInt++) {
-            $Row = $ValueArr[$RowIteratorInt];
-            $QueryStr .= "(";
-            for ($CellIteratorInt = 0; $CellIteratorInt < count($Row); $CellIteratorInt++) {
-                $QueryStr .= "'$Row[$CellIteratorInt]'";
-                if ($CellIteratorInt != count($Row)-1) {
-                    $QueryStr .= ", ";
-                }
-            }
-            if ($RowIteratorInt != count($ValueArr)-1) {
-                $QueryStr .= "), ";
-            } else {
-                $QueryStr .= ")";
-            }
-        }
-
-        $QueryStr = rtrim($QueryStr,",");
-        $QuerySuccessful = mysqli_query($this->ConnectionObj, $QueryStr);
-        if (!$QuerySuccessful) {
-            echo "Failed inserting ".$this->ConnectionObj->error;
-            return;
-        }
-        return $QuerySuccessful;
-    }
-    public function shapeDataForInsert($DynamicObj){
-        $FirstElement = reset($DynamicObj);
+    public function createRows($TableNameStr, $ObjArr) {
         $KeyArr = [];
-        foreach ($FirstElement as $KeyStr => $ValueStr) {
+        foreach (reset($ObjArr) as $KeyStr => $ValueMixed) {
             $KeyArr[] = $KeyStr;
         }
-        $ValueArr = [];
-        foreach ($DynamicObj as $SubDynamicObj) {
-            $LocalValueArr = [];
-            foreach ($SubDynamicObj as $PropertyKeyStr => $PropertyValueStr) {
-                $LocalValueArr[] = $PropertyValueStr;
+        $KeySqlStr = implode(',', $KeyArr);
+        $SqlValuesArr = [];
+        foreach ($ObjArr as $Obj) {
+            $ValueMixedArr = [];
+            foreach ($Obj as $KeyStr => $ValueMixed) {
+                $ValueMixedArr[] = '"'.$ValueMixed.'"';
             }
-            $ValueArr[] = $LocalValueArr;
+            $SqlValuesArr[] = '('.implode(',', $ValueMixedArr).')';
         }
-        return (object)["KeyArr"=>$KeyArr, "ValueArr"=>$ValueArr];
+        return 'INSERT INTO '.$TableNameStr.' ('.$KeySqlStr.') VALUES '.implode(',', $SqlValuesArr);
     }
 
 }
 
 class Logging extends BaseClass {
+    private $TimerObj = [];
+
     function __construct($ConnectionObj) {
         $this->ConnectionObj = $ConnectionObj;
         parent::__construct($ConnectionObj);
     }
 
-    function createLog($LogArr) {
-        $ShapedDataObj = $this->shapeDataForInsert($LogArr);
-        $this->insertRecords("Logging", $ShapedDataObj->KeyArr, $ShapedDataObj->ValueArr);
+    function startLog() {
+        $this->TimerObj = new Timer();
+    }
+
+    function endLog($NameStr) {
+        $LogArr = [
+            (object)['Name' => $NameStr, 'Created' => date("Y-m-d h:i"), 'QueryTime' => $this->TimerObj->read()]];
+        $this->createLogs($LogArr);
+
+        return true;
+    }
+
+    private function createLogs($LogArr) {
+        $SqlStr = $this->createRows("Logging", $LogArr);
+        return mysqli_query($this->ConnectionObj, $SqlStr);
+    }
+
+    private function createLog($LogObj) {
+        return $this->createLogs([$LogObj]);
     }
 }
 
@@ -87,8 +102,7 @@ class Person extends BaseClass {
         parent::__construct($ConnectionObj);
     }
 
-    function loadPerson($IdInt)
-    {
+    function loadPerson($IdInt) {
         $QueryStr = "SELECT Id, FirstName, Surname, DateOfBirth, EmailAddress, Age 
                         FROM Person where id=$IdInt";
         $PersonQueryResultObj = $this->ConnectionObj->query($QueryStr);
@@ -101,17 +115,17 @@ class Person extends BaseClass {
         return $PersonArr;
     }
 
-    function savePerson($PersonObj)
-    {
+    function savePerson($PersonObj) {
         // $strDate = $PersonObj->dateOfBirth->format('Y-m-d H:i:s');
         $QueryStr = "UPDATE Person SET 
-                        FirstName = '$PersonObj->FirstNameStr',
-                        Surname = '$PersonObj->SurnameStr', 
-                        DateOfBirth = '$PersonObj->DateOfBirthStr', 
-                        EmailAddress = '$PersonObj->EmailAddressStr', 
-                        Age = '$PersonObj->AgeInt'
-                      WHERE Id = $PersonObj->IdInt";
+                        FirstName = '$PersonObj->FirstName',
+                        Surname = '$PersonObj->Surname', 
+                        DateOfBirth = '$PersonObj->DateOfBirth', 
+                        EmailAddress = '$PersonObj->EmailAddress', 
+                        Age = '$PersonObj->Age'
+                      WHERE Id = $PersonObj->Id";
 
+        echo $QueryStr;
         $QueryResultBool = mysqli_query($this->ConnectionObj, $QueryStr);
 
         if (!$QueryResultBool) {
@@ -121,8 +135,7 @@ class Person extends BaseClass {
         return $QueryResultBool;
     }
 
-    function deletePerson($id)
-    {
+    function deletePerson($id) {
         $QueryStr = "DELETE FROM Person WHERE Id = $id";
         $QueryResultBool = mysqli_query($this->ConnectionObj, $QueryStr);
 
@@ -171,10 +184,13 @@ class Person extends BaseClass {
         return true;
     }
 
-    function createPeople($PeopleArr) {
-        //echo(json_encode($PeopleArr));
-        $ShapedDataObj = $this->shapeDataForInsert($PeopleArr);
-        $this->insertRecords("Person", $ShapedDataObj->KeyArr, $ShapedDataObj->ValueArr);
+    function createPeople($PeopleArr): bool {
+        $SqlStr = $this->createRows("Person", $PeopleArr);
+        return mysqli_query($this->ConnectionObj, $SqlStr);
+    }
+
+    function createPerson($PersonObj) {
+        return $this->createPeople([$PersonObj]);
     }
 
 
@@ -213,43 +229,51 @@ if ($ConnectionObj->connect_error) {
     die("Connection failed: ".$ConnectionObj->connect_error);
 }
 
-$Logging = new Logging($ConnectionObj);
+$LogObj = new Logging($ConnectionObj);
 $PersonObj = new Person($ConnectionObj);
-$ReturnDataObj = "";
+$ReturnJsonStr = "";
+$MethodStr = "";
 
-if ($_POST && !array_key_exists("_method", $_POST) && array_key_exists("Type", $_POST)) {
-    if ($_POST["Type"] == "allPeople") {
-        $CurrentTimeFlt = microtime(true);
-        $TimeStampInt = time();
-        $CurrentDateStr = gmdate("Y-m-d H:i:s", $TimeStampInt);
-        $ReturnDataObj = json_encode($PersonObj->loadAllPeople());
-        $QueryTime = round(microtime(true) - $CurrentTimeFlt, 3) * 1000;
-        $LoggingDtoObj = [(object)['Name' => 'loadAllPeople()', 'Description'=>'loadAllPeople() DB Query', 'Created' => $CurrentDateStr, "QueryTime"=>$QueryTime]];
-        $Logging->createLog($LoggingDtoObj);        
-    } else if ($_POST["Type"] == "addMockData") {
-        $ReturnDataObj = json_encode($PersonObj->addMockData());
-    } else if ($_POST["Type"] == "createPerson") {
-        $PersonDtoArr = [(object)['FirstName' => $_POST["FirstName"], 'Surname' => $_POST["Surname"], 'DateOfBirth' => $_POST["DateOfBirth"],
-            'EmailAddress' => $_POST["EmailAddress"], 'Age' => $_POST["Age"]]];
-            $ReturnDataObj = json_encode($PersonObj->createPeople($PersonDtoArr));
-    }
-} else if ($_GET && array_key_exists("Id", $_GET)) {
-    $ReturnDataObj = json_encode($PersonObj->loadPerson($_GET["Id"]));
-} else if (array_key_exists('_method', $_POST)) {
-    if ($_POST['_method'] === 'PUT') {
-        parse_str(file_get_contents("php://input"), $http_vars);
-        $PersonDtoArr = new PersonDto($http_vars["FirstName"], $http_vars["Surname"], $http_vars["DateOfBirth"], $http_vars["EmailAddress"], $http_vars["Age"], $http_vars["Id"]);
-        $ReturnDataObj = json_encode($PersonObj->savePerson($PersonDtoArr));
-    } else if ($_POST['_method'] === 'DELETE') {
-        parse_str(file_get_contents("php://input"), $http_vars);
-        if (array_key_exists("Id", $http_vars)) {
-            $ReturnDataObj = json_encode($PersonObj->deletePerson($http_vars["Id"]));
-        } else {
-            $ReturnDataObj = json_encode($PersonObj->deleteAllPeople());
-        }
-    }
+$MethodStr = $_POST['Type'];
+
+switch ($MethodStr) {
+    case 'getPerson':
+        $ReturnJsonStr = json_encode($PersonObj->loadPerson($_POST["Id"]));
+        break;
+    case 'updatePerson':
+        $PersonDtoArr = (object)['FirstName' => $_POST["FirstName"], 'Surname' => $_POST["Surname"],
+            'DateOfBirth' => $_POST["DateOfBirth"],
+            'EmailAddress' => $_POST["EmailAddress"], 'Age' => $_POST["Age"], 'Id' => $_POST["Id"]];
+        $ReturnJsonStr = json_encode($PersonObj->savePerson($PersonDtoArr));
+        break;
+    case 'createPerson':
+        $PersonDtoArr = (object)['FirstName' => $_POST["FirstName"], 'Surname' => $_POST["Surname"],
+            'DateOfBirth' => $_POST["DateOfBirth"],
+            'EmailAddress' => $_POST["EmailAddress"], 'Age' => $_POST["Age"]];
+        $ReturnJsonStr = json_encode($PersonObj->createPerson($PersonDtoArr));
+        break;
+    case 'deletePerson':
+        $ReturnJsonStr = json_encode($PersonObj->deletePerson($_POST["Id"]));
+        break;
+    case 'deleteAllPeople':
+        $ReturnJsonStr = json_encode($PersonObj->deleteAllPeople());
+        break;
+    case 'getAllPeople':
+        $LogObj->startLog();
+        $ReturnJsonStr = json_encode($PersonObj->loadAllPeople());
+        $LogObj->endLog("loadAllPeople");
+        break;
+    case 'addMockData':
+        $ReturnJsonStr = json_encode($PersonObj->addMockData());
+        break;
+    default:
 }
+echo $ReturnJsonStr;
 
-echo $ReturnDataObj;
+//TODO: Change to POST // Remove REST
+//TODO: Extract start and end timer into class/method
+//TODO: Add headers in JQuery AJAX
+//TODO: Add JQUERY AJAX in single location
+
 
 ?>

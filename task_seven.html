@@ -26,26 +26,6 @@
           rel="stylesheet">
 
     <script>
-        function addMockData() {
-            $('.TBodyPerson').empty().append(`<tr><th>loading....</th>`);
-            $.post("http://localhost:63342/FoundationTasks/task_six.php",
-                {"Type": "addMockData"},
-                function (data, status) {
-                    $('.TBodyPerson').empty();
-                    if (data && data.length && status) {
-                        loadAllPeople();
-                    } else {
-                        let toast = {
-                            title: "Error!",
-                            message: "There was an error in adding the mocked data",
-                            status: TOAST_STATUS.DANGER,
-                            timeout: 5000
-                        }
-                        Toast.create(toast);
-                    }
-                });
-        }
-
         function isValidCreate() {
             $("input").removeClass("border").removeClass("border-danger");
 
@@ -84,7 +64,7 @@
                 $('#editSurnameInput').addClass("border").addClass("border-danger");
                 isValid = false;
             }
-            if (!$('#editDateOfBirthInput').val() || (new Date($('#editDateOfBirthInput').val()) > new Date()) ) {
+            if (!$('#editDateOfBirthInput').val() || (new Date($('#editDateOfBirthInput').val()) > new Date())) {
                 $('#editDateOfBirthInput').addClass("border").addClass("border-danger");
                 isValid = false;
             }
@@ -99,6 +79,20 @@
             return isValid;
         }
 
+        function addMockData() {
+            $('.TBodyPerson').empty().append(`<tr><th>loading....</th>`);
+            postData({}, "addMockData", function (data) {
+                $('.TBodyPerson').empty();
+                if (data) {
+                    loadAllPeople();
+                } else {
+                    toastr.error("No mocked data was returned.");
+                }
+            }, function () {
+                toastr.error("There was an error in adding the mocked data");
+            })
+        }
+
         function createPerson() {
             if (!isValidCreate()) {
                 toastr.error("Please make sure all the fields are filled in correctly");
@@ -110,27 +104,21 @@
                 Surname: $('#createSurnameInput').val(),
                 DateOfBirth: $('#createDateOfBirthInput').val(),
                 EmailAddress: $('#createEmailAddressInput').val(),
-                Age: $('#createAgeInput').val(),
-                Type: "createPerson"
+                Age: $('#createAgeInput').val()
             };
-
-            $.ajax({
-                url: "http://localhost:63342/FoundationTasks/task_six.php",
-                type: 'POST',
-                data: person,
-                success: function (result) {
+            postData(person, "createPerson",
+                function (result) {
                     toastr.success("Successfully saved the person");
                     $('#createPersonModal').modal('hide');
                     loadAllPeople();
                 },
-                failure: function (result) {
+                function (result) {
                     console.log("create person error:", result)
                     toastr.error("Error in creating the person. Please try again");
-                }
-            });
+                });
         }
 
-        function loadPerson(id) {
+        function getPerson(id) {
             $('#editIdInput').val("");
             $('#editFirstNameInput').val("");
             $('#editSurnameInput').val("");
@@ -138,16 +126,14 @@
             $('#editEmailAddressInput').val(null);
             $('#editAgeInput').val(0);
 
-            $.ajax({
-                url: "http://localhost:63342/FoundationTasks/task_six.php",
-                type: 'GET',
-                data: {Id: id},
-                success: function (data) {
-                    if (data) {
-                        data = JSON.parse(data);
+            postData({Id: id}, "getPerson",
+                function (data) {
+                    if (!data) {
+                        toastr.error("Error in loading the person. Please try again");
+                        return;
                     }
-                    let item = data[0];
-
+                    let item = JSON.parse(data)[0];
+                    console.log("item ==> ", item)
                     $('#editIdInput').val(item.Id);
                     $('#editFirstNameInput').val(item.FirstName);
                     $('#editSurnameInput').val(item.Surname);
@@ -157,69 +143,57 @@
 
                     toastr.success("Successfully loaded the person")
                 },
-                failure: function (result) {
+                function (result) {
                     toastr.error("Error in loading the person. Please try again");
                 }
-            });
+            );
         }
 
-        function savePerson(id) {
+        function updatePerson(id) {
             if (!isValidUpdate()) {
                 toastr.error("Please make sure all the fields are filled in correctly");
                 return;
             }
-            editPersonDto = {
+            var editPersonDto = {
                 Id: id,
                 FirstName: $('#editFirstNameInput').val(),
                 Surname: $('#editSurnameInput').val(),
                 DateOfBirth: $('#editDateOfBirthInput').val(),
                 EmailAddress: $('#editEmailAddressInput').val(),
                 Age: $('#editAgeInput').val(),
-                _method: "PUT"
             }
-            $.ajax({
-                url: "http://localhost:63342/FoundationTasks/task_six.php",
-                type: 'POST',
-                data: editPersonDto,
-                success: function (result) {
+            postData(editPersonDto, "updatePerson",
+                function (result) {
                     toastr.success("Successfully saved the person");
                     $('#editPersonModal').modal('hide');
                     loadAllPeople();
                 },
-                failure: function (result) {
+                function (result) {
                     toastr.success("Error in saving the person. Please try again");
                 }
-            });
-
+            );
         }
 
         function deletePerson(id) {
-            $.ajax({
-                url: "http://localhost:63342/FoundationTasks/task_six.php",
-                type: 'POST',
-                data: {
-                    Id: id,
-                    _method: "DELETE"
-                },
-                success: function (result) {
+            postData({Id: id}, "deletePerson",
+                function (result) {
                     toastr.success("Successfully deleted the person");
                     $('#deletePersonModal').modal('hide');
                     loadAllPeople();
                 },
-                failure: function (result) {
+                function (result) {
                     toastr.success("Error in saving the person. Please try again");
                 }
-            });
+            );
         }
 
         function loadAllPeople() {
             $('.TBodyPerson').empty().append(`<tr><th>loading....</th>`);
-            $.post("http://localhost:63342/FoundationTasks/task_six.php",
-                {Type: "allPeople"},
+            postData({}, "getAllPeople",
                 function (data, status) {
                     $('.TBodyPerson').empty();
-                    if (data && data.length && status)
-                        data = JSON.parse(data);
+                    // if (data && data.length && status)
+                    data = JSON.parse(data);
                     for (let i = 0; i < data.length; i++) {
                         let item = data[i];
                         var tr = `<tr><th scope="row">` + item.Id + `</th>
@@ -245,26 +219,37 @@
                                     </tr>`;
                         $('.TBodyPerson').append(tr);
                     }
+                },
+                function (error) {
+                    toastr.error("We ran into issues loading people. Pleaase try again.");
                 });
         }
 
         function deleteAllPeople() {
-            $.ajax({
-                url: "http://localhost:63342/FoundationTasks/task_six.php",
-                type: 'POST',
-                data: {
-                    _method: "DELETE"
-                },
-                success: function (result) {
+            postData({}, "deleteAllPeople",
+                function (result) {
                     toastr.success("Successfully deleted all people");
                     $('#deleteAllPersonsModal').modal('hide');
                     loadAllPeople();
                 },
-                failure: function (result) {
+                function (result) {
                     toastr.success("Error in deleting everyone. Please try again");
                 }
-            });
+            );
 
+        }
+
+        function postData(data, method, success, failure) {
+            var baseUrl = "http://localhost:63342/FoundationTasks/task_six.php";
+            data['Type'] = method;
+            $.ajax({
+                url: baseUrl,
+                type: 'POST',
+                //contentType: "application/json",
+                data: data,
+                success: success,
+                failure: failure
+            });
         }
 
         $(document).ready(function () {
@@ -276,9 +261,8 @@
                 if ($(e.target).hasClass('edit') || $(e.target).parents('.edit').length) {
                     var id = $(e.target).attr('person-id') || $(e.target).parents('.edit').attr('person-id');
                     $('#editSubmitButton').attr('person-id', id);
-                    loadPerson(id);
-                }
-                else if ($(e.target).hasClass('delete') || $(e.target).parents('.delete').length) {
+                    getPerson(id);
+                } else if ($(e.target).hasClass('delete') || $(e.target).parents('.delete').length) {
                     var id = $(e.target).attr('person-id') || $(e.target).parents('.delete').attr('person-id')
                     $('#deleteSubmitButton').attr('person-id', id);
                 }
@@ -287,41 +271,42 @@
                 deletePerson($(e.target).attr('person-id'));
             });
             $('#editSubmitButton').click(function (e) {
-                savePerson( $('#editSubmitButton').attr('person-id'));
+                updatePerson($('#editSubmitButton').attr('person-id'));
             });
             $('#deleteAllSubmitButton').click(function (e) {
                 deleteAllPeople();
             });
-
             $('#createSubmitButton').click(function (e) {
                 delete createPerson();
             });
-            $('#editDateOfBirthInput').change(function(){
+            $('#editDateOfBirthInput').change(function () {
                 var dobInput = $('#editDateOfBirthInput').val();
                 var age = 0;
-                if(dobInput && Date.parse(dobInput)){
+                if (dobInput && Date.parse(dobInput)) {
                     var dob = new Date(dobInput);
                     var today = new Date();
                     var dayDiff = Math.ceil(today - dob) / (1000 * 60 * 60 * 24 * 365);
                     age = parseInt(dayDiff);
-                    if(age<0 || age>120){age=0;}
+                    if (age < 0 || age > 120) {
+                        age = 0;
+                    }
                 }
                 $('#editAgeInput').val(age);
             });
-            $('#createDateOfBirthInput').change(function(){
+            $('#createDateOfBirthInput').change(function () {
                 var dobInput = $('#createDateOfBirthInput').val();
                 var age = 0;
-                if(dobInput && Date.parse(dobInput)){
+                if (dobInput && Date.parse(dobInput)) {
                     var dob = new Date(dobInput);
                     var today = new Date();
                     var dayDiff = Math.ceil(today - dob) / (1000 * 60 * 60 * 24 * 365);
                     age = parseInt(dayDiff);
                 }
-                if(age<0 || age>120){age=0;}
+                if (age < 0 || age > 120) {
+                    age = 0;
+                }
                 $('#createAgeInput').val(age);
             });
-
-
         });
     </script>
 
